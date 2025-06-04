@@ -40,3 +40,242 @@
 .read-the-docs {
   color: #888;
 }
+
+/* ゲーム用スタイル */
+.game-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.game-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.game-title {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.game-info {
+  background: #f5f5f5;
+  padding: 0.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.game-info-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.cpu-players {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.central-area {
+  background: #fff;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 1rem;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-execution {
+  width: 100%;
+  text-align: center;
+}
+
+.role-execution-title {
+  color: #2c5aa0;
+  margin-bottom: 0.5rem;
+}
+
+.role-execution-info {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.action-section {
+  width: 100%;
+  max-width: 600px;
+}
+
+.action-title {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.action-description {
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.action-center {
+  display: flex;
+  justify-content: center;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #1e7e34;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #545b62;
+}
+
+.production-buildings,
+.products,
+.councilor-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.building-option,
+.product-option,
+.card-option {
+  padding: 0.5rem;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f8f9fa;
+}
+
+.building-option:hover,
+.product-option:hover,
+.card-option:hover {
+  border-color: #007bff;
+  background: #e3f2fd;
+}
+
+.building-option.selected,
+.product-option.selected,
+.card-option.selected {
+  border-color: #28a745;
+  background: #d4edda;
+  color: #155724;
+}
+
+.trading-post-info {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.trading-post-info h5 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.prices {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.prices span {
+  background: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.game-log {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.game-log h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.game-log-entry {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  .game-info-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .cpu-players {
+    flex-direction: column;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .prices {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

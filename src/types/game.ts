@@ -58,6 +58,7 @@ export interface GameState {
   currentRolePlayer: number;
   currentExecutingPlayer: number;
   gameLog: string[];
+  councilorCards?: BuildingCard[];
 }
 
 export interface GameAction {

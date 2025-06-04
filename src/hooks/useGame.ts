@@ -77,13 +77,14 @@ const initializeGame = (): GameState => {
     availableRoles: ['builder', 'producer', 'trader', 'councilor', 'prospector'],
     deck: remainingDeck.slice(deckIndex),
     discardPile: [],
-    tradingPosts: shuffledTradingPosts,
-    currentTradingPost: null,
+    tradingPosts: shuffledTradingPosts.slice(1),
+    currentTradingPost: shuffledTradingPosts[0],
     phase: 'role-selection',
     currentRole: null,
     currentRolePlayer: 0,
     currentExecutingPlayer: 0,
-    gameLog: ['ゲームを開始しました。']
+    gameLog: ['ゲームを開始しました。'],
+    councilorCards: []
   };
 };
 
@@ -92,17 +93,20 @@ export const useGame = () => {
 
   // デッキからカードを引く
   const drawCards = useCallback((count: number): BuildingCard[] => {
+    let drawnCards: BuildingCard[] = [];
+    
     setGameState((prev: GameState) => {
       const newDeck = [...prev.deck];
-      const drawnCards: BuildingCard[] = [];
+      const newDiscardPile = [...prev.discardPile];
+      drawnCards = [];
       
       for (let i = 0; i < count; i++) {
         if (newDeck.length === 0) {
           // デッキが空の場合、捨て札をシャッフルして新しいデッキにする
-          if (prev.discardPile.length > 0) {
-            const shuffledDiscard = [...prev.discardPile].sort(() => Math.random() - 0.5);
+          if (newDiscardPile.length > 0) {
+            const shuffledDiscard = [...newDiscardPile].sort(() => Math.random() - 0.5);
             newDeck.push(...shuffledDiscard);
-            prev.discardPile.length = 0;
+            newDiscardPile.length = 0;
           } else {
             break; // カードがない場合は終了
           }
@@ -115,11 +119,12 @@ export const useGame = () => {
       
       return {
         ...prev,
-        deck: newDeck
+        deck: newDeck,
+        discardPile: newDiscardPile
       };
     });
     
-    return [];
+    return drawnCards;
   }, []);
 
   // 役割を選択
@@ -254,6 +259,168 @@ export const useGame = () => {
     });
   }, []);
 
+  // 商品を売却
+  const sellGoods = useCallback((playerId: string, productTypes: string[]) => {
+    setGameState((prev: GameState) => {
+      const playerIndex = prev.players.findIndex((p: Player) => p.id === playerId);
+      if (playerIndex === -1) return prev;
+
+      const player = prev.players[playerIndex];
+      const newPlayers = [...prev.players];
+      
+      let maxSales = productTypes.length;
+      
+      // 特権による追加売却
+      if (prev.currentRolePlayer === playerIndex) {
+        maxSales += 1;
+      }
+      
+      // 貿易所の効果
+      const tradingHouseCount = player.buildings.filter((b: BuildingCard) => b.name === '貿易所').length;
+      maxSales += tradingHouseCount;
+
+      const soldProducts: string[] = [];
+      const newProducts = [...player.products];
+      let totalCardDrawn = 0;
+      
+      for (let i = 0; i < Math.min(maxSales, productTypes.length); i++) {
+        const productType = productTypes[i];
+        const productIndex = newProducts.findIndex(p => p.type === productType);
+        
+        if (productIndex !== -1 && prev.currentTradingPost) {
+          const price = prev.currentTradingPost.prices[productType as keyof typeof prev.currentTradingPost.prices];
+          totalCardDrawn += price;
+          soldProducts.push(productType);
+          newProducts.splice(productIndex, 1);
+        }
+      }
+      
+      // カードを手札に追加
+      const cardsToAdd: BuildingCard[] = [];
+      for (let i = 0; i < totalCardDrawn && i < prev.deck.length; i++) {
+        cardsToAdd.push(prev.deck[i]);
+      }
+      
+      newPlayers[playerIndex] = {
+        ...player,
+        products: newProducts,
+        hand: [...player.hand, ...cardsToAdd]
+      };
+
+      return {
+        ...prev,
+        players: newPlayers,
+        deck: prev.deck.slice(totalCardDrawn),
+        gameLog: [...prev.gameLog, `${player.name}が${soldProducts.length}個の商品を売却し、${totalCardDrawn}枚のカードを獲得しました。`]
+      };
+    });
+  }, []);
+
+  // 参事会議員でカードを引く
+  const drawCouncilorCards = useCallback((playerId: string) => {
+    setGameState((prev: GameState) => {
+      const playerIndex = prev.players.findIndex((p: Player) => p.id === playerId);
+      if (playerIndex === -1) return prev;
+
+      // 特権による枚数計算
+      const isRolePlayer = prev.currentRolePlayer === playerIndex;
+      const drawCount = isRolePlayer ? 5 : 2;
+      
+      const newDeck = [...prev.deck];
+      const newDiscardPile = [...prev.discardPile];
+      const drawnCards: BuildingCard[] = [];
+      
+      for (let i = 0; i < drawCount; i++) {
+        if (newDeck.length === 0) {
+          if (newDiscardPile.length > 0) {
+            const shuffledDiscard = [...newDiscardPile].sort(() => Math.random() - 0.5);
+            newDeck.push(...shuffledDiscard);
+            newDiscardPile.length = 0;
+          } else {
+            break;
+          }
+        }
+        
+        if (newDeck.length > 0) {
+          drawnCards.push(newDeck.shift()!);
+        }
+      }
+
+      return {
+        ...prev,
+        deck: newDeck,
+        discardPile: newDiscardPile,
+        gameLog: [...prev.gameLog, `${prev.players[playerIndex].name}が参事会議員で${drawnCards.length}枚のカードを引きました。`],
+        // 引いたカードを一時的に保存
+        councilorCards: drawnCards
+      };
+    });
+  }, []);
+
+  // 参事会議員でカードを選択
+  const selectCouncilorCards = useCallback((playerId: string, selectedCards: BuildingCard[], discardCards: BuildingCard[]) => {
+    setGameState((prev: GameState) => {
+      const playerIndex = prev.players.findIndex((p: Player) => p.id === playerId);
+      if (playerIndex === -1) return prev;
+
+      const player = prev.players[playerIndex];
+      const newPlayers = [...prev.players];
+      
+      newPlayers[playerIndex] = {
+        ...player,
+        hand: [...player.hand, ...selectedCards]
+      };
+
+      return {
+        ...prev,
+        players: newPlayers,
+        discardPile: [...prev.discardPile, ...discardCards],
+        councilorCards: [], // リセット
+        gameLog: [...prev.gameLog, `${player.name}が参事会議員で${selectedCards.length}枚のカードを獲得しました。`]
+      };
+    });
+  }, []);
+
+  // 金鉱掘りでカードを獲得
+  const prospectorDrawCard = useCallback((playerId: string) => {
+    setGameState((prev: GameState) => {
+      const playerIndex = prev.players.findIndex((p: Player) => p.id === playerId);
+      if (playerIndex === -1 || prev.deck.length === 0) return prev;
+
+      const player = prev.players[playerIndex];
+      const newPlayers = [...prev.players];
+      const drawnCard = prev.deck[0];
+      
+      newPlayers[playerIndex] = {
+        ...player,
+        hand: [...player.hand, drawnCard]
+      };
+
+      return {
+        ...prev,
+        players: newPlayers,
+        deck: prev.deck.slice(1),
+        gameLog: [...prev.gameLog, `${player.name}が金鉱掘りで1枚のカードを獲得しました。`]
+      };
+    });
+  }, []);
+
+  // 商館タイルを公開
+  const revealTradingPost = useCallback(() => {
+    setGameState((prev: GameState) => {
+      if (prev.tradingPosts.length === 0) return prev;
+      
+      const newTradingPost = prev.tradingPosts[0];
+      
+      return {
+        ...prev,
+        currentTradingPost: newTradingPost,
+        tradingPosts: prev.tradingPosts.slice(1),
+        gameLog: [...prev.gameLog, '新しい商館タイルが公開されました。']
+      };
+    });
+  }, []);
+
   // 次のプレイヤーに移行
   const nextPlayer = useCallback(() => {
     setGameState((prev: GameState) => {
@@ -342,6 +509,11 @@ export const useGame = () => {
     selectRole,
     buildBuilding,
     produceGoods,
+    sellGoods,
+    drawCouncilorCards,
+    selectCouncilorCards,
+    prospectorDrawCard,
+    revealTradingPost,
     nextPlayer,
     nextRoleExecution,
     checkGameEnd,

@@ -5,9 +5,24 @@ import PlayerArea from './PlayerArea';
 import RoleSelection from './RoleSelection';
 
 const Game: React.FC = () => {
-  const { gameState, selectRole, buildBuilding, nextRoleExecution } = useGame();
+  const {
+    gameState,
+    selectRole,
+    buildBuilding,
+    produceGoods,
+    sellGoods,
+    drawCouncilorCards,
+    selectCouncilorCards,
+    prospectorDrawCard,
+    revealTradingPost,
+    nextRoleExecution,
+    drawCards
+  } = useGame();
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [buildingToBuild, setBuildingToBuild] = useState<string | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedBuildings, setSelectedBuildings] = useState<string[]>([]);
+  const [selectedCouncilorCards, setSelectedCouncilorCards] = useState<string[]>([]);
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const humanPlayer = gameState.players.find(p => p.isHuman);
@@ -47,7 +62,96 @@ const Game: React.FC = () => {
     }
   };
 
+  const handleProduce = () => {
+    if (!humanPlayer) return;
+    
+    const productionBuildings = selectedBuildings.map(id =>
+      humanPlayer.buildings.find(building => building.id === id)!
+    ).filter(Boolean);
+    
+    produceGoods(humanPlayer.id, productionBuildings);
+    setSelectedBuildings([]);
+    nextRoleExecution();
+  };
+
+  const handleSell = () => {
+    if (!humanPlayer) return;
+    
+    if (gameState.currentTradingPost === null) {
+      revealTradingPost();
+    }
+    
+    sellGoods(humanPlayer.id, selectedProducts);
+    setSelectedProducts([]);
+    nextRoleExecution();
+  };
+
+  const handleCouncilor = () => {
+    if (!humanPlayer) return;
+    
+    drawCouncilorCards(humanPlayer.id);
+  };
+
+  const handleCouncilorSelect = () => {
+    if (!humanPlayer || !gameState.councilorCards || gameState.councilorCards.length === 0) return;
+    
+    const selected = selectedCouncilorCards.map(id =>
+      gameState.councilorCards!.find(card => card.id === id)!
+    ).filter(Boolean);
+    
+    const discarded = gameState.councilorCards.filter(card =>
+      !selectedCouncilorCards.includes(card.id)
+    );
+    
+    selectCouncilorCards(humanPlayer.id, selected, discarded);
+    setSelectedCouncilorCards([]);
+    nextRoleExecution();
+  };
+
+  const handleProspector = () => {
+    if (!humanPlayer) return;
+    
+    // 金鉱掘りは選択者のみが効果を得る
+    if (gameState.currentRolePlayer === gameState.players.indexOf(humanPlayer)) {
+      prospectorDrawCard(humanPlayer.id);
+    }
+    nextRoleExecution();
+  };
+
+  const handleBuildingSelect = (buildingId: string) => {
+    if (selectedBuildings.includes(buildingId)) {
+      setSelectedBuildings(selectedBuildings.filter(id => id !== buildingId));
+    } else {
+      setSelectedBuildings([...selectedBuildings, buildingId]);
+    }
+  };
+
+  const handleProductSelect = (productType: string) => {
+    if (selectedProducts.includes(productType)) {
+      setSelectedProducts(selectedProducts.filter(type => type !== productType));
+    } else {
+      setSelectedProducts([...selectedProducts, productType]);
+    }
+  };
+
+  const handleCouncilorCardSelect = (cardId: string) => {
+    if (selectedCouncilorCards.includes(cardId)) {
+      setSelectedCouncilorCards(selectedCouncilorCards.filter(id => id !== cardId));
+    } else {
+      const maxSelection = gameState.currentRolePlayer === gameState.players.indexOf(humanPlayer!) ? 1 : 1;
+      if (selectedCouncilorCards.length < maxSelection) {
+        setSelectedCouncilorCards([...selectedCouncilorCards, cardId]);
+      }
+    }
+  };
+
   const handleSkip = () => {
+    // 状態をリセット
+    setSelectedCards([]);
+    setBuildingToBuild(null);
+    setSelectedProducts([]);
+    setSelectedBuildings([]);
+    setSelectedCouncilorCards([]);
     nextRoleExecution();
   };
 
@@ -106,7 +210,144 @@ const Game: React.FC = () => {
             </div>
           )}
 
-          {executingPlayer.isHuman && gameState.currentRole !== 'builder' && (
+          {executingPlayer.isHuman && gameState.currentRole === 'producer' && (
+            <div className="action-section">
+              <h4 className="action-title">生産する施設を選択:</h4>
+              <div className="production-buildings">
+                {executingPlayer.buildings
+                  .filter(building => building.type === 'production' && building.productType)
+                  .filter(building => !executingPlayer.products.some(p => p.type === building.productType))
+                  .map(building => (
+                    <div
+                      key={building.id}
+                      className={`building-option ${selectedBuildings.includes(building.id) ? 'selected' : ''}`}
+                      onClick={() => handleBuildingSelect(building.id)}
+                    >
+                      {building.name} ({building.productType})
+                    </div>
+                  ))}
+              </div>
+              <div className="action-buttons">
+                <button
+                  onClick={handleProduce}
+                  className="btn btn-success"
+                  disabled={selectedBuildings.length === 0}
+                >
+                  生産
+                </button>
+                <button
+                  onClick={handleSkip}
+                  className="btn btn-secondary"
+                >
+                  スキップ
+                </button>
+              </div>
+            </div>
+          )}
+
+          {executingPlayer.isHuman && gameState.currentRole === 'trader' && (
+            <div className="action-section">
+              <h4 className="action-title">売却する商品を選択:</h4>
+              {gameState.currentTradingPost && (
+                <div className="trading-post-info">
+                  <h5>商館タイル価格:</h5>
+                  <div className="prices">
+                    <span>インディゴ: {gameState.currentTradingPost.prices.indigo}</span>
+                    <span>砂糖: {gameState.currentTradingPost.prices.sugar}</span>
+                    <span>タバコ: {gameState.currentTradingPost.prices.tobacco}</span>
+                    <span>コーヒー: {gameState.currentTradingPost.prices.coffee}</span>
+                    <span>シルバー: {gameState.currentTradingPost.prices.silver}</span>
+                  </div>
+                </div>
+              )}
+              <div className="products">
+                {executingPlayer.products.map(product => (
+                  <div
+                    key={product.type}
+                    className={`product-option ${selectedProducts.includes(product.type) ? 'selected' : ''}`}
+                    onClick={() => handleProductSelect(product.type)}
+                  >
+                    {product.type}
+                  </div>
+                ))}
+              </div>
+              <div className="action-buttons">
+                <button
+                  onClick={handleSell}
+                  className="btn btn-success"
+                  disabled={selectedProducts.length === 0}
+                >
+                  売却
+                </button>
+                <button
+                  onClick={handleSkip}
+                  className="btn btn-secondary"
+                >
+                  スキップ
+                </button>
+              </div>
+            </div>
+          )}
+
+          {executingPlayer.isHuman && gameState.currentRole === 'councilor' && (
+            <div className="action-section">
+              {!gameState.councilorCards || gameState.councilorCards.length === 0 ? (
+                <div>
+                  <h4 className="action-title">参事会議員</h4>
+                  <p>カードを引きます</p>
+                  <button
+                    onClick={handleCouncilor}
+                    className="btn btn-primary"
+                  >
+                    カードを引く
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <h4 className="action-title">獲得するカードを1枚選択:</h4>
+                  <div className="councilor-cards">
+                    {gameState.councilorCards.map(card => (
+                      <div
+                        key={card.id}
+                        className={`card-option ${selectedCouncilorCards.includes(card.id) ? 'selected' : ''}`}
+                        onClick={() => handleCouncilorCardSelect(card.id)}
+                      >
+                        {card.name} (コスト:{card.cost})
+                      </div>
+                    ))}
+                  </div>
+                  <div className="action-buttons">
+                    <button
+                      onClick={handleCouncilorSelect}
+                      className="btn btn-success"
+                      disabled={selectedCouncilorCards.length !== 1}
+                    >
+                      選択
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {executingPlayer.isHuman && gameState.currentRole === 'prospector' && (
+            <div className="action-section">
+              <h4 className="action-title">金鉱掘り</h4>
+              {gameState.currentRolePlayer === gameState.currentExecutingPlayer ? (
+                <p>カードを1枚獲得します</p>
+              ) : (
+                <p>効果はありません</p>
+              )}
+              <button
+                onClick={handleProspector}
+                className="btn btn-primary"
+              >
+                次へ
+              </button>
+            </div>
+          )}
+
+          {executingPlayer.isHuman && !['builder', 'producer', 'trader', 'councilor', 'prospector'].includes(gameState.currentRole!) && (
             <div className="action-center">
               <button
                 onClick={handleSkip}
