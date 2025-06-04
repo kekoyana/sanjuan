@@ -157,7 +157,19 @@ export const useGame = () => {
       if (playerIndex === -1) return prev;
 
       const player = prev.players[playerIndex];
-      const newPlayers = [...prev.players];
+      
+      // 建物が手札にあるかチェック
+      if (!player.hand.some(card => card.id === buildingCard.id)) {
+        return prev;
+      }
+      
+      // 都市施設の重複チェック
+      if (buildingCard.type === 'civic') {
+        const alreadyBuilt = player.buildings.some(b => b.name === buildingCard.name);
+        if (alreadyBuilt) {
+          return prev;
+        }
+      }
       
       // コスト計算（特権や建物効果を考慮）
       let actualCost = buildingCard.cost;
@@ -176,13 +188,20 @@ export const useGame = () => {
       
       actualCost = Math.max(0, actualCost);
       
-      if (costCards.length !== actualCost) {
+      // コストカードの有効性チェック
+      const validCostCards = costCards.filter(card =>
+        player.hand.some(handCard => handCard.id === card.id) && card.id !== buildingCard.id
+      );
+      
+      if (validCostCards.length !== actualCost) {
         return prev;
       }
 
+      const newPlayers = [...prev.players];
+      
       // 手札から建物とコストカードを除去
       const newHand = player.hand.filter((card: BuildingCard) =>
-        card.id !== buildingCard.id && !costCards.some((c: BuildingCard) => c.id === card.id)
+        card.id !== buildingCard.id && !validCostCards.some((c: BuildingCard) => c.id === card.id)
       );
       
       // 建物を追加
@@ -197,8 +216,8 @@ export const useGame = () => {
       return {
         ...prev,
         players: newPlayers,
-        discardPile: [...prev.discardPile, ...costCards],
-        gameLog: [...prev.gameLog, `${player.name}が${buildingCard.name}を建設しました。`]
+        discardPile: [...prev.discardPile, ...validCostCards],
+        gameLog: [...prev.gameLog, `${player.name}が${buildingCard.name}を建設しました。（コスト: ${actualCost}枚）`]
       };
     });
   }, []);
@@ -452,19 +471,22 @@ export const useGame = () => {
     setGameState((prev: GameState) => {
       const playerIndex = prev.players.findIndex((p: Player) => p.id === playerId);
       if (playerIndex === -1 || !prev.currentRole) {
-        console.log('CPU行動エラー: プレイヤーまたは役割が見つからない', playerId, prev.currentRole);
         return prev;
       }
 
       const player = prev.players[playerIndex];
       const newPlayers = [...prev.players];
-      
-      console.log(`${player.name}のCPU行動実行:`, prev.currentRole);
 
       switch (prev.currentRole) {
         case 'builder': {
           // 建設可能な建物を探す
           const affordableBuildings = player.hand.filter(building => {
+            // 都市施設の重複チェック
+            if (building.type === 'civic') {
+              const alreadyBuilt = player.buildings.some(b => b.name === building.name);
+              if (alreadyBuilt) return false;
+            }
+            
             let cost = building.cost;
             if (prev.currentRolePlayer === playerIndex) cost -= 1; // 特権
             
@@ -482,8 +504,35 @@ export const useGame = () => {
           });
 
           if (affordableBuildings.length > 0) {
-            // 最初の建設可能な建物を選択
-            const buildingToBuild = affordableBuildings[0];
+            // コストが安い建物を優先
+            const buildingToBuild = affordableBuildings.sort((a, b) => {
+              let costA = a.cost;
+              let costB = b.cost;
+              
+              if (prev.currentRolePlayer === playerIndex) {
+                costA -= 1;
+                costB -= 1;
+              }
+              
+              if (a.type === 'production') {
+                const smithyCount = player.buildings.filter((b: BuildingCard) => b.name === '鍛冶屋').length;
+                costA -= smithyCount;
+              } else if (a.type === 'civic') {
+                const quarryCount = player.buildings.filter((b: BuildingCard) => b.name === '石切場').length;
+                costA -= quarryCount;
+              }
+              
+              if (b.type === 'production') {
+                const smithyCount = player.buildings.filter((b: BuildingCard) => b.name === '鍛冶屋').length;
+                costB -= smithyCount;
+              } else if (b.type === 'civic') {
+                const quarryCount = player.buildings.filter((b: BuildingCard) => b.name === '石切場').length;
+                costB -= quarryCount;
+              }
+              
+              return Math.max(0, costA) - Math.max(0, costB);
+            })[0];
+            
             let cost = buildingToBuild.cost;
             if (prev.currentRolePlayer === playerIndex) cost -= 1;
             
@@ -515,7 +564,7 @@ export const useGame = () => {
               ...prev,
               players: newPlayers,
               discardPile: [...prev.discardPile, ...costCards],
-              gameLog: [...prev.gameLog, `${player.name}が${buildingToBuild.name}を建設しました。`]
+              gameLog: [...prev.gameLog, `${player.name}が${buildingToBuild.name}を建設しました。（コスト: ${cost}枚）`]
             };
           }
           break;
@@ -649,7 +698,6 @@ export const useGame = () => {
         }
       }
 
-      console.log(`${player.name}: 実行できる行動がない、スキップ`);
       // 何も行動できない場合でも、ログを残して次に進む
       return {
         ...prev,

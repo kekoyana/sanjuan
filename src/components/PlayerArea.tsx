@@ -1,5 +1,5 @@
 import React from 'react';
-import { Player, Product } from '../types/game';
+import { Player, Product, RoleType } from '../types/game';
 import BuildingCard from './BuildingCard';
 
 interface PlayerAreaProps {
@@ -8,6 +8,9 @@ interface PlayerAreaProps {
   isHuman?: boolean;
   onCardClick?: (cardId: string) => void;
   selectedCards?: string[];
+  selectedBuilding?: string | null;
+  gamePhase?: string;
+  currentRole?: RoleType | null;
 }
 
 const PlayerArea: React.FC<PlayerAreaProps> = ({
@@ -15,7 +18,10 @@ const PlayerArea: React.FC<PlayerAreaProps> = ({
   isCurrentPlayer = false,
   isHuman = false,
   onCardClick,
-  selectedCards = []
+  selectedCards = [],
+  selectedBuilding = null,
+  gamePhase = '',
+  currentRole = null
 }) => {
   const getProductIcon = (productType: string) => {
     switch (productType) {
@@ -86,16 +92,33 @@ const PlayerArea: React.FC<PlayerAreaProps> = ({
       {isHuman && (
         <div className="hand-section">
           <h4 className="section-title">手札</h4>
+          {gamePhase === 'role-execution' && currentRole === 'builder' && selectedBuilding && (
+            <div className="builder-instruction">
+              <p className="instruction-text">
+                🔨 <strong>建築モード:</strong>
+                建設中の建物: <span className="selected-building-name">{player.hand.find(c => c.id === selectedBuilding)?.name}</span>
+              </p>
+              <p className="hint-text">
+                💡 他のカードをクリックしてコストカードを選択 | 建設する建物をクリックで選択解除
+              </p>
+            </div>
+          )}
           <div className="hand-grid">
-            {player.hand.map((card: any) => (
-              <BuildingCard
-                key={card.id}
-                card={card}
-                size="small"
-                onClick={onCardClick ? () => onCardClick(card.id) : undefined}
-                isSelected={selectedCards.includes(card.id)}
-              />
-            ))}
+            {player.hand.map((card: any) => {
+              const isSelectedBuilding = selectedBuilding === card.id;
+              const isCostCard = selectedCards.includes(card.id);
+              
+              return (
+                <BuildingCard
+                  key={card.id}
+                  card={card}
+                  size="small"
+                  onClick={onCardClick ? () => onCardClick(card.id) : undefined}
+                  isSelected={isCostCard}
+                  className={isSelectedBuilding ? 'selected-building' : ''}
+                />
+              );
+            })}
           </div>
         </div>
       )}

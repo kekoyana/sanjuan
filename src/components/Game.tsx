@@ -43,16 +43,13 @@ const Game: React.FC = () => {
   useEffect(() => {
     if (gameState.phase === 'role-execution') {
       const executingPlayer = gameState.players[gameState.currentExecutingPlayer];
-      console.log('実行フェーズ:', executingPlayer.name, '人間?', executingPlayer.isHuman);
       
       if (!executingPlayer.isHuman) {
         const timer = setTimeout(() => {
-          console.log(`${executingPlayer.name}がCPU行動を実行中:`, gameState.currentRole);
           cpuExecuteAction(executingPlayer.id);
           
           // CPU行動後、次のプレイヤーに移行
           const nextTimer = setTimeout(() => {
-            console.log('次のプレイヤーに移行');
             nextRoleExecution();
           }, 1000);
           
@@ -70,13 +67,27 @@ const Game: React.FC = () => {
 
   const handleCardClick = (cardId: string) => {
     if (gameState.phase === 'role-execution' && gameState.currentRole === 'builder') {
-      if (buildingToBuild === cardId) {
-        setBuildingToBuild(null);
+      if (buildingToBuild) {
+        // 建物が選択済みの場合、コストカード選択モード
+        if (cardId === buildingToBuild) {
+          // 選択中の建物を再クリックした場合は建物選択をキャンセル
+          setBuildingToBuild(null);
+          setSelectedCards([]);
+        } else {
+          // コストカードの選択/選択解除
+          if (selectedCards.includes(cardId)) {
+            setSelectedCards(selectedCards.filter(id => id !== cardId));
+          } else {
+            setSelectedCards([...selectedCards, cardId]);
+          }
+        }
       } else {
+        // 建物選択モード
         setBuildingToBuild(cardId);
         setSelectedCards([]);
       }
     } else {
+      // 建築士以外の役割での通常のカード選択
       if (selectedCards.includes(cardId)) {
         setSelectedCards(selectedCards.filter(id => id !== cardId));
       } else {
@@ -89,14 +100,50 @@ const Game: React.FC = () => {
     if (!buildingToBuild || !humanPlayer) return;
     
     const buildingCard = humanPlayer.hand.find(card => card.id === buildingToBuild);
-    const costCards = selectedCards.map(id => humanPlayer.hand.find(card => card.id === id)!).filter(Boolean);
+    if (!buildingCard) return;
     
-    if (buildingCard) {
-      buildBuilding(humanPlayer.id, buildingCard, costCards);
-      setBuildingToBuild(null);
-      setSelectedCards([]);
-      nextRoleExecution();
+    // コスト計算
+    let actualCost = buildingCard.cost;
+    const isRolePlayer = gameState.currentRolePlayer === gameState.players.indexOf(humanPlayer);
+    if (isRolePlayer) {
+      actualCost -= 1; // 建築士の特権
     }
+    
+    // 建物効果による割引
+    if (buildingCard.type === 'production') {
+      const smithyCount = humanPlayer.buildings.filter(b => b.name === '鍛冶屋').length;
+      actualCost -= smithyCount;
+    } else if (buildingCard.type === 'civic') {
+      const quarryCount = humanPlayer.buildings.filter(b => b.name === '石切場').length;
+      actualCost -= quarryCount;
+    }
+    
+    actualCost = Math.max(0, actualCost);
+    
+    // 都市施設の重複チェック
+    if (buildingCard.type === 'civic') {
+      const alreadyBuilt = humanPlayer.buildings.some(b => b.name === buildingCard.name);
+      if (alreadyBuilt) {
+        alert('同じ都市施設は複数建設できません。');
+        return;
+      }
+    }
+    
+    // コストカードの選択チェック
+    const costCards = selectedCards
+      .map(id => humanPlayer.hand.find(card => card.id === id)!)
+      .filter(Boolean)
+      .filter(card => card.id !== buildingToBuild); // 建築する建物を除外
+    
+    if (costCards.length !== actualCost) {
+      alert(`コストが${actualCost}枚必要です。現在${costCards.length}枚選択されています。`);
+      return;
+    }
+    
+    buildBuilding(humanPlayer.id, buildingCard, costCards);
+    setBuildingToBuild(null);
+    setSelectedCards([]);
+    nextRoleExecution();
   };
 
   const handleProduce = () => {
@@ -235,26 +282,95 @@ const Game: React.FC = () => {
           {executingPlayer.isHuman && gameState.currentRole === 'builder' && (
             <div className="action-section">
               <h4 className="action-title">建設する建物を選択:</h4>
-              {buildingToBuild && (
-                <div>
-                  <p className="action-description">コストカードを選択:</p>
-                  <div className="action-buttons">
-                    <button
-                      onClick={handleBuild}
-                      className="btn btn-success"
-                      disabled={!buildingToBuild}
-                    >
-                      建設
-                    </button>
-                    <button
-                      onClick={handleSkip}
-                      className="btn btn-secondary"
-                    >
-                      スキップ
-                    </button>
-                  </div>
-                </div>
+              {!buildingToBuild && (
+                <p className="action-description">手札から建設したい建物をクリックしてください</p>
               )}
+              {buildingToBuild && (() => {
+                const buildingCard = humanPlayer?.hand.find(card => card.id === buildingToBuild);
+                if (!buildingCard) return null;
+                
+                let actualCost = buildingCard.cost;
+                const isRolePlayer = gameState.currentRolePlayer === gameState.players.indexOf(humanPlayer!);
+                if (isRolePlayer) {
+                  actualCost -= 1; // 建築士の特権
+                }
+                
+                // 建物効果による割引
+                if (buildingCard.type === 'production') {
+                  const smithyCount = humanPlayer!.buildings.filter(b => b.name === '鍛冶屋').length;
+                  actualCost -= smithyCount;
+                } else if (buildingCard.type === 'civic') {
+                  const quarryCount = humanPlayer!.buildings.filter(b => b.name === '石切場').length;
+                  actualCost -= quarryCount;
+                }
+                
+                actualCost = Math.max(0, actualCost);
+                
+                const costCards = selectedCards
+                  .map(id => humanPlayer!.hand.find(card => card.id === id)!)
+                  .filter(Boolean)
+                  .filter(card => card.id !== buildingToBuild);
+                
+                const canBuild = costCards.length === actualCost;
+                
+                // 都市施設の重複チェック
+                const isDuplicate = buildingCard.type === 'civic' &&
+                  humanPlayer!.buildings.some(b => b.name === buildingCard.name);
+                
+                return (
+                  <div>
+                    <div className="building-info">
+                      <p><strong>選択中:</strong> {buildingCard.name}</p>
+                      <p><strong>元のコスト:</strong> {buildingCard.cost}枚</p>
+                      {isRolePlayer && <p className="privilege">建築士特権: -1枚</p>}
+                      {buildingCard.type === 'production' && humanPlayer!.buildings.filter(b => b.name === '鍛冶屋').length > 0 && (
+                        <p className="building-effect">鍛冶屋効果: -{humanPlayer!.buildings.filter(b => b.name === '鍛冶屋').length}枚</p>
+                      )}
+                      {buildingCard.type === 'civic' && humanPlayer!.buildings.filter(b => b.name === '石切場').length > 0 && (
+                        <p className="building-effect">石切場効果: -{humanPlayer!.buildings.filter(b => b.name === '石切場').length}枚</p>
+                      )}
+                      <p><strong>実際のコスト:</strong> {actualCost}枚</p>
+                      <p><strong>選択済み:</strong> {costCards.length}枚</p>
+                      {isDuplicate && <p className="error">この都市施設は既に建設済みです</p>}
+                    </div>
+                    <div className="instruction-text">
+                      <p className="action-description">
+                        <strong>コストとして捨てるカードを{actualCost}枚選択してください</strong>
+                      </p>
+                      <p className="hint">
+                        💡 手札の他のカードをクリックしてコストカードを選択
+                      </p>
+                      <p className="hint">
+                        💡 選択中の建物「{buildingCard.name}」をもう一度クリックで建物選択をやり直し
+                      </p>
+                    </div>
+                    <div className="action-buttons">
+                      <button
+                        onClick={handleBuild}
+                        className="btn btn-success"
+                        disabled={!canBuild || isDuplicate}
+                      >
+                        建設
+                      </button>
+                      <button
+                        onClick={() => {
+                          setBuildingToBuild(null);
+                          setSelectedCards([]);
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        建物選択をやり直し
+                      </button>
+                      <button
+                        onClick={handleSkip}
+                        className="btn btn-secondary"
+                      >
+                        スキップ
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -468,7 +584,10 @@ const Game: React.FC = () => {
             isCurrentPlayer={gameState.currentPlayerIndex === gameState.players.indexOf(humanPlayer)}
             isHuman={true}
             onCardClick={handleCardClick}
-            selectedCards={buildingToBuild ? [buildingToBuild, ...selectedCards] : selectedCards}
+            selectedCards={selectedCards}
+            selectedBuilding={buildingToBuild}
+            gamePhase={gameState.phase}
+            currentRole={gameState.currentRole}
           />
         )}
       </div>

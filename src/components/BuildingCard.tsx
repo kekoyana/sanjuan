@@ -7,14 +7,16 @@ interface BuildingCardProps {
   isSelected?: boolean;
   showCost?: boolean;
   size?: 'small' | 'medium' | 'large';
+  className?: string;
 }
 
-const BuildingCard: React.FC<BuildingCardProps> = ({ 
-  card, 
-  onClick, 
-  isSelected = false, 
+const BuildingCard: React.FC<BuildingCardProps> = ({
+  card,
+  onClick,
+  isSelected = false,
   showCost = true,
-  size = 'medium'
+  size = 'medium',
+  className = ''
 }) => {
   const getProductIcon = (productType?: string) => {
     switch (productType) {
@@ -39,7 +41,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
 
   return (
     <div
-      className={`building-card ${size} ${getCardBackground()} ${isSelected ? 'selected' : ''}`}
+      className={`building-card ${size} ${getCardBackground()} ${isSelected ? 'selected' : ''} ${className}`}
       onClick={onClick}
       title={card.name}
     >
