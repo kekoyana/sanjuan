@@ -30,25 +30,39 @@ const Game: React.FC = () => {
 
   // CPUの自動処理
   useEffect(() => {
-    if (!currentPlayer.isHuman) {
+    if (gameState.phase === 'role-selection' && !currentPlayer.isHuman) {
       const timer = setTimeout(() => {
-        if (gameState.phase === 'role-selection') {
-          cpuSelectRole(currentPlayer.id);
-        } else if (gameState.phase === 'role-execution') {
-          const executingPlayer = gameState.players[gameState.currentExecutingPlayer];
-          if (!executingPlayer.isHuman) {
-            cpuExecuteAction(executingPlayer.id);
-            // CPU行動後、次のプレイヤーに移行
-            setTimeout(() => {
-              nextRoleExecution();
-            }, 1000);
-          }
-        }
-      }, 1500); // 1.5秒後に自動実行
+        cpuSelectRole(currentPlayer.id);
+      }, 1500); // 1.5秒後に役割選択
 
       return () => clearTimeout(timer);
     }
-  }, [gameState.phase, gameState.currentPlayerIndex, gameState.currentExecutingPlayer, currentPlayer.isHuman, cpuSelectRole, cpuExecuteAction, nextRoleExecution]);
+  }, [gameState.phase, gameState.currentPlayerIndex, currentPlayer.isHuman, cpuSelectRole]);
+
+  // CPU役割実行の自動処理
+  useEffect(() => {
+    if (gameState.phase === 'role-execution') {
+      const executingPlayer = gameState.players[gameState.currentExecutingPlayer];
+      console.log('実行フェーズ:', executingPlayer.name, '人間?', executingPlayer.isHuman);
+      
+      if (!executingPlayer.isHuman) {
+        const timer = setTimeout(() => {
+          console.log(`${executingPlayer.name}がCPU行動を実行中:`, gameState.currentRole);
+          cpuExecuteAction(executingPlayer.id);
+          
+          // CPU行動後、次のプレイヤーに移行
+          const nextTimer = setTimeout(() => {
+            console.log('次のプレイヤーに移行');
+            nextRoleExecution();
+          }, 1000);
+          
+          return () => clearTimeout(nextTimer);
+        }, 1500); // 1.5秒後に行動実行
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [gameState.phase, gameState.currentExecutingPlayer, gameState.currentRole, cpuExecuteAction, nextRoleExecution]);
 
   const handleRoleSelect = (role: RoleType) => {
     selectRole(role);

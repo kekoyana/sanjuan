@@ -451,10 +451,15 @@ export const useGame = () => {
   const cpuExecuteAction = useCallback((playerId: string) => {
     setGameState((prev: GameState) => {
       const playerIndex = prev.players.findIndex((p: Player) => p.id === playerId);
-      if (playerIndex === -1 || !prev.currentRole) return prev;
+      if (playerIndex === -1 || !prev.currentRole) {
+        console.log('CPU行動エラー: プレイヤーまたは役割が見つからない', playerId, prev.currentRole);
+        return prev;
+      }
 
       const player = prev.players[playerIndex];
       const newPlayers = [...prev.players];
+      
+      console.log(`${player.name}のCPU行動実行:`, prev.currentRole);
 
       switch (prev.currentRole) {
         case 'builder': {
@@ -644,7 +649,12 @@ export const useGame = () => {
         }
       }
 
-      return prev;
+      console.log(`${player.name}: 実行できる行動がない、スキップ`);
+      // 何も行動できない場合でも、ログを残して次に進む
+      return {
+        ...prev,
+        gameLog: [...prev.gameLog, `${player.name}は${getRoleName(prev.currentRole!)}をスキップしました。`]
+      };
     });
   }, []);
 
