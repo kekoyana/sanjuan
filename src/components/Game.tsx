@@ -17,8 +17,7 @@ const Game: React.FC = () => {
     revealTradingPost,
     cpuSelectRole,
     cpuExecuteAction,
-    nextRoleExecution,
-    drawCards
+    nextRoleExecution
   } = useGame();
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [buildingToBuild, setBuildingToBuild] = useState<string | null>(null);
