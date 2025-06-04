@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { GameState, Player, RoleType, BuildingCard, Product } from '../types/game';
+import { GameState, Player, RoleType, BuildingCard } from '../types/game';
 import { BUILDING_CARDS } from '../data/buildings';
 import { TRADING_POSTS } from '../data/tradingPosts';
 
@@ -293,7 +293,31 @@ export const useGame = () => {
       // 全プレイヤーが役割を実行したかチェック
       if (nextExecutingPlayer === prev.currentRolePlayer) {
         // 役割実行完了、次のプレイヤーの役割選択へ
-        return nextPlayer();
+        const nextPlayerIndex = (prev.currentPlayerIndex + 1) % prev.players.length;
+        
+        // 全プレイヤーが役割を選択したかチェック
+        if (prev.selectedRoles.length === prev.players.length) {
+          // ラウンド終了
+          return {
+            ...prev,
+            currentPlayerIndex: (prev.governorIndex + 1) % prev.players.length,
+            governorIndex: (prev.governorIndex + 1) % prev.players.length,
+            currentRound: prev.currentRound + 1,
+            currentTurn: 1,
+            selectedRoles: [],
+            availableRoles: ['builder', 'producer', 'trader', 'councilor', 'prospector'],
+            phase: 'role-selection',
+            currentRole: null,
+            gameLog: [...prev.gameLog, `ラウンド${prev.currentRound}が終了しました。`]
+          };
+        }
+        
+        return {
+          ...prev,
+          currentPlayerIndex: nextPlayerIndex,
+          currentTurn: prev.currentTurn + 1,
+          phase: 'role-selection'
+        };
       }
       
       return {

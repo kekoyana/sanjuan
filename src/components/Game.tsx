@@ -3,7 +3,6 @@ import { useGame } from '../hooks/useGame';
 import { RoleType } from '../types/game';
 import PlayerArea from './PlayerArea';
 import RoleSelection from './RoleSelection';
-import BuildingCard from './BuildingCard';
 
 const Game: React.FC = () => {
   const { gameState, selectRole, buildBuilding, nextRoleExecution } = useGame();
@@ -152,7 +151,7 @@ const Game: React.FC = () => {
 
         {/* CPU プレイヤーエリア */}
         <div className="cpu-players">
-          {gameState.players.filter((p: any) => !p.isHuman).map((player: any, index: number) => (
+          {gameState.players.filter((p: any) => !p.isHuman).map((player: any) => (
             <PlayerArea
               key={player.id}
               player={player}
