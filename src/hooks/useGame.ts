@@ -421,6 +421,233 @@ export const useGame = () => {
     });
   }, []);
 
+  // CPU自動役割選択
+  const cpuSelectRole = useCallback((playerId: string) => {
+    setGameState((prev: GameState) => {
+      const playerIndex = prev.players.findIndex((p: Player) => p.id === playerId);
+      if (playerIndex === -1 || prev.availableRoles.length === 0) return prev;
+
+      // 簡単なAI: ランダムに役割を選択
+      const randomIndex = Math.floor(Math.random() * prev.availableRoles.length);
+      const selectedRole = prev.availableRoles[randomIndex];
+      
+      const newSelectedRoles = [...prev.selectedRoles, selectedRole];
+      const newAvailableRoles = prev.availableRoles.filter((r: RoleType) => r !== selectedRole);
+      
+      return {
+        ...prev,
+        selectedRoles: newSelectedRoles,
+        availableRoles: newAvailableRoles,
+        currentRole: selectedRole,
+        currentRolePlayer: prev.currentPlayerIndex,
+        currentExecutingPlayer: prev.currentPlayerIndex,
+        phase: 'role-execution',
+        gameLog: [...prev.gameLog, `${prev.players[prev.currentPlayerIndex].name}が${getRoleName(selectedRole)}を選択しました。`]
+      };
+    });
+  }, []);
+
+  // CPU自動行動
+  const cpuExecuteAction = useCallback((playerId: string) => {
+    setGameState((prev: GameState) => {
+      const playerIndex = prev.players.findIndex((p: Player) => p.id === playerId);
+      if (playerIndex === -1 || !prev.currentRole) return prev;
+
+      const player = prev.players[playerIndex];
+      const newPlayers = [...prev.players];
+
+      switch (prev.currentRole) {
+        case 'builder': {
+          // 建設可能な建物を探す
+          const affordableBuildings = player.hand.filter(building => {
+            let cost = building.cost;
+            if (prev.currentRolePlayer === playerIndex) cost -= 1; // 特権
+            
+            // 建物効果による割引
+            if (building.type === 'production') {
+              const smithyCount = player.buildings.filter((b: BuildingCard) => b.name === '鍛冶屋').length;
+              cost -= smithyCount;
+            } else if (building.type === 'civic') {
+              const quarryCount = player.buildings.filter((b: BuildingCard) => b.name === '石切場').length;
+              cost -= quarryCount;
+            }
+            
+            cost = Math.max(0, cost);
+            return player.hand.length - 1 >= cost; // 建物自体を除いたコスト
+          });
+
+          if (affordableBuildings.length > 0) {
+            // 最初の建設可能な建物を選択
+            const buildingToBuild = affordableBuildings[0];
+            let cost = buildingToBuild.cost;
+            if (prev.currentRolePlayer === playerIndex) cost -= 1;
+            
+            if (buildingToBuild.type === 'production') {
+              const smithyCount = player.buildings.filter((b: BuildingCard) => b.name === '鍛冶屋').length;
+              cost -= smithyCount;
+            } else if (buildingToBuild.type === 'civic') {
+              const quarryCount = player.buildings.filter((b: BuildingCard) => b.name === '石切場').length;
+              cost -= quarryCount;
+            }
+            
+            cost = Math.max(0, cost);
+            
+            // コストカードを選択（建物を除く）
+            const costCards = player.hand.filter(card => card.id !== buildingToBuild.id).slice(0, cost);
+            
+            // 建設実行
+            const newHand = player.hand.filter((card: BuildingCard) =>
+              card.id !== buildingToBuild.id && !costCards.some((c: BuildingCard) => c.id === card.id)
+            );
+            
+            newPlayers[playerIndex] = {
+              ...player,
+              hand: newHand,
+              buildings: [...player.buildings, buildingToBuild]
+            };
+
+            return {
+              ...prev,
+              players: newPlayers,
+              discardPile: [...prev.discardPile, ...costCards],
+              gameLog: [...prev.gameLog, `${player.name}が${buildingToBuild.name}を建設しました。`]
+            };
+          }
+          break;
+        }
+
+        case 'producer': {
+          // 生産可能な施設を探す
+          const productionBuildings = player.buildings.filter(building =>
+            building.type === 'production' &&
+            building.productType &&
+            !player.products.some(p => p.type === building.productType)
+          );
+
+          if (productionBuildings.length > 0 && prev.deck.length > 0) {
+            let maxProduction = 1;
+            if (prev.currentRolePlayer === playerIndex) maxProduction += 1; // 特権
+            
+            const aqueductCount = player.buildings.filter((b: BuildingCard) => b.name === '水道橋').length;
+            maxProduction += aqueductCount;
+
+            const newProducts = [...player.products];
+            const cardsToDiscard: BuildingCard[] = [];
+            let producedCount = 0;
+
+            for (const building of productionBuildings.slice(0, maxProduction)) {
+              if (prev.deck.length > cardsToDiscard.length) {
+                const drawnCard = prev.deck[cardsToDiscard.length];
+                newProducts.push({
+                  type: building.productType!,
+                  cardId: drawnCard.id
+                });
+                cardsToDiscard.push(drawnCard);
+                producedCount++;
+              }
+            }
+
+            newPlayers[playerIndex] = {
+              ...player,
+              products: newProducts
+            };
+
+            return {
+              ...prev,
+              players: newPlayers,
+              deck: prev.deck.slice(cardsToDiscard.length),
+              gameLog: [...prev.gameLog, `${player.name}が${producedCount}個の商品を生産しました。`]
+            };
+          }
+          break;
+        }
+
+        case 'trader': {
+          if (player.products.length > 0 && prev.currentTradingPost) {
+            let maxSales = 1;
+            if (prev.currentRolePlayer === playerIndex) maxSales += 1; // 特権
+            
+            const tradingHouseCount = player.buildings.filter((b: BuildingCard) => b.name === '貿易所').length;
+            maxSales += tradingHouseCount;
+
+            const productsToSell = player.products.slice(0, maxSales);
+            const newProducts = player.products.slice(maxSales);
+            
+            let totalCardDrawn = 0;
+            for (const product of productsToSell) {
+              const price = prev.currentTradingPost.prices[product.type as keyof typeof prev.currentTradingPost.prices];
+              totalCardDrawn += price;
+            }
+
+            const cardsToAdd: BuildingCard[] = [];
+            for (let i = 0; i < totalCardDrawn && i < prev.deck.length; i++) {
+              cardsToAdd.push(prev.deck[i]);
+            }
+
+            newPlayers[playerIndex] = {
+              ...player,
+              products: newProducts,
+              hand: [...player.hand, ...cardsToAdd]
+            };
+
+            return {
+              ...prev,
+              players: newPlayers,
+              deck: prev.deck.slice(totalCardDrawn),
+              gameLog: [...prev.gameLog, `${player.name}が${productsToSell.length}個の商品を売却し、${totalCardDrawn}枚のカードを獲得しました。`]
+            };
+          }
+          break;
+        }
+
+        case 'councilor': {
+          const isRolePlayer = prev.currentRolePlayer === playerIndex;
+          const drawCount = isRolePlayer ? 5 : 2;
+          
+          if (prev.deck.length > 0) {
+            const cardsToAdd = prev.deck.slice(0, Math.min(1, drawCount)); // 1枚だけ獲得
+            const cardsToDiscard = prev.deck.slice(1, drawCount);
+
+            newPlayers[playerIndex] = {
+              ...player,
+              hand: [...player.hand, ...cardsToAdd]
+            };
+
+            return {
+              ...prev,
+              players: newPlayers,
+              deck: prev.deck.slice(drawCount),
+              discardPile: [...prev.discardPile, ...cardsToDiscard],
+              gameLog: [...prev.gameLog, `${player.name}が参事会議員で${cardsToAdd.length}枚のカードを獲得しました。`]
+            };
+          }
+          break;
+        }
+
+        case 'prospector': {
+          if (prev.currentRolePlayer === playerIndex && prev.deck.length > 0) {
+            const drawnCard = prev.deck[0];
+            
+            newPlayers[playerIndex] = {
+              ...player,
+              hand: [...player.hand, drawnCard]
+            };
+
+            return {
+              ...prev,
+              players: newPlayers,
+              deck: prev.deck.slice(1),
+              gameLog: [...prev.gameLog, `${player.name}が金鉱掘りで1枚のカードを獲得しました。`]
+            };
+          }
+          break;
+        }
+      }
+
+      return prev;
+    });
+  }, []);
+
   // 次のプレイヤーに移行
   const nextPlayer = useCallback(() => {
     setGameState((prev: GameState) => {
@@ -514,6 +741,8 @@ export const useGame = () => {
     selectCouncilorCards,
     prospectorDrawCard,
     revealTradingPost,
+    cpuSelectRole,
+    cpuExecuteAction,
     nextPlayer,
     nextRoleExecution,
     checkGameEnd,

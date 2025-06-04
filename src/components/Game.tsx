@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '../hooks/useGame';
 import { RoleType } from '../types/game';
 import PlayerArea from './PlayerArea';
@@ -15,6 +15,8 @@ const Game: React.FC = () => {
     selectCouncilorCards,
     prospectorDrawCard,
     revealTradingPost,
+    cpuSelectRole,
+    cpuExecuteAction,
     nextRoleExecution,
     drawCards
   } = useGame();
@@ -26,6 +28,28 @@ const Game: React.FC = () => {
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const humanPlayer = gameState.players.find(p => p.isHuman);
+
+  // CPUの自動処理
+  useEffect(() => {
+    if (!currentPlayer.isHuman) {
+      const timer = setTimeout(() => {
+        if (gameState.phase === 'role-selection') {
+          cpuSelectRole(currentPlayer.id);
+        } else if (gameState.phase === 'role-execution') {
+          const executingPlayer = gameState.players[gameState.currentExecutingPlayer];
+          if (!executingPlayer.isHuman) {
+            cpuExecuteAction(executingPlayer.id);
+            // CPU行動後、次のプレイヤーに移行
+            setTimeout(() => {
+              nextRoleExecution();
+            }, 1000);
+          }
+        }
+      }, 1500); // 1.5秒後に自動実行
+
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.phase, gameState.currentPlayerIndex, gameState.currentExecutingPlayer, currentPlayer.isHuman, cpuSelectRole, cpuExecuteAction, nextRoleExecution]);
 
   const handleRoleSelect = (role: RoleType) => {
     selectRole(role);
@@ -157,13 +181,24 @@ const Game: React.FC = () => {
 
   const renderCurrentAction = () => {
     if (gameState.phase === 'role-selection') {
-      return (
-        <RoleSelection
-          availableRoles={gameState.availableRoles}
-          onRoleSelect={handleRoleSelect}
-          currentPlayer={currentPlayer.name}
-        />
-      );
+      if (currentPlayer.isHuman) {
+        return (
+          <RoleSelection
+            availableRoles={gameState.availableRoles}
+            onRoleSelect={handleRoleSelect}
+            currentPlayer={currentPlayer.name}
+          />
+        );
+      } else {
+        return (
+          <div className="cpu-role-selection">
+            <h3 className="role-selection-title">{currentPlayer.name}が役割を選択中...</h3>
+            <div className="cpu-processing">
+              <div className="spinner"></div>
+            </div>
+          </div>
+        );
+      }
     }
 
     if (gameState.phase === 'role-execution') {
@@ -360,13 +395,10 @@ const Game: React.FC = () => {
 
           {!executingPlayer.isHuman && (
             <div className="action-center">
-              <p className="action-description">CPUが処理中...</p>
-              <button
-                onClick={handleSkip}
-                className="btn btn-primary"
-              >
-                次へ
-              </button>
+              <p className="action-description">{executingPlayer.name}が処理中...</p>
+              <div className="cpu-processing">
+                <div className="spinner"></div>
+              </div>
             </div>
           )}
         </div>
