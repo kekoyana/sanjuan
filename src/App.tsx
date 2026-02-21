@@ -145,7 +145,7 @@ function App() {
                       <span className="governor-badge">★</span>
                     )}
                     <span className="hand-count">
-                      手札{p.hand.length} 建物{p.buildings.length}
+                      手札{p.hand.length}
                     </span>
                   </div>
                   <div className="opponent-buildings">
