@@ -1,6 +1,6 @@
 import React, { useReducer, useEffect, useRef } from 'react';
 import './App.css';
-import { GameState, RoleType, ROLE_NAMES } from './game/types';
+import { GameState, RoleType, GoodType, ROLE_NAMES, GOOD_NAMES } from './game/types';
 import { GameAction } from './game/actions';
 import { gameReducer, createInitialState } from './game/reducer';
 import {
@@ -11,7 +11,9 @@ import {
   getBuildCost,
   getMaxSellCount,
   getMaxProductionCount,
+  getDiscardExcessCount,
 } from './game/engine';
+import { getHandLimit, hasBuilding } from './game/utils';
 import {
   aiSelectRole,
   aiDecideBuild,
@@ -308,6 +310,22 @@ function ActionPanel({
     );
   }
 
+  // サブフェーズ: 手札上限超過
+  if (state.subPhase === 'discard_excess') {
+    const discardPlayer = state.players[state.executingPlayerIndex];
+    if (discardPlayer.isHuman) {
+      return <HandLimitPanel state={state} dispatch={dispatch} />;
+    }
+  }
+
+  // サブフェーズ: 公文書館
+  if (state.subPhase === 'archive_select') {
+    const archivePlayer = state.players[state.executingPlayerIndex];
+    if (archivePlayer.isHuman) {
+      return <ArchivePanel state={state} dispatch={dispatch} />;
+    }
+  }
+
   const currentPlayer = state.players[state.executingPlayerIndex];
   const isHumanTurn = currentPlayer.isHuman;
 
@@ -383,14 +401,42 @@ function BuilderPanel({
   dispatch: React.Dispatch<GameAction>;
 }) {
   const player = state.players[0];
+  const hasCrane = hasBuilding(player.buildings, 'crane');
+  const hasBlackMarket = hasBuilding(player.buildings, 'black_market');
+
   const [selectedBuild, setSelectedBuild] = React.useState<number | null>(null);
+  const [craneTarget, setCraneTarget] = React.useState<number | undefined>(undefined);
+  const [craneDecided, setCraneDecided] = React.useState(false);
+  const [selectedGoods, setSelectedGoods] = React.useState<Set<number>>(new Set());
+  const [goodsDecided, setGoodsDecided] = React.useState(false);
   const [selectedPayment, setSelectedPayment] = React.useState<Set<number>>(new Set());
 
-  // 建設カード選択
+  const resetAll = () => {
+    setSelectedBuild(null);
+    setCraneTarget(undefined);
+    setCraneDecided(false);
+    setSelectedGoods(new Set());
+    setGoodsDecided(false);
+    setSelectedPayment(new Set());
+  };
+
+  // Step 1: 建設カード選択
   if (selectedBuild === null) {
-    const buildable = player.hand.filter((c) =>
-      canBuild(state, 0, c.instanceId)
-    );
+    // クレーン有無で建設可能カードを判定
+    const buildableInfo = player.hand.map((c) => {
+      const def = getCardDef(c);
+      const normalBuild = canBuild(state, 0, c.instanceId);
+      let craneBuild = false;
+      if (hasCrane) {
+        for (let i = 0; i < player.buildings.length; i++) {
+          if (canBuild(state, 0, c.instanceId, i)) {
+            craneBuild = true;
+            break;
+          }
+        }
+      }
+      return { card: c, def, normalBuild, craneBuild, canBuildAny: normalBuild || craneBuild };
+    });
 
     return (
       <div className="action-panel">
@@ -399,26 +445,24 @@ function BuilderPanel({
           {state.roleChooser === 0 ? '特権: コスト-1' : ''}
         </p>
         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
-          {player.hand.map((c) => {
-            const def = getCardDef(c);
-            const canBuildThis = buildable.some((b) => b.instanceId === c.instanceId);
+          {buildableInfo.map(({ card: c, def, canBuildAny, craneBuild, normalBuild }) => {
             const cost = getBuildCost(state, 0, def.id);
             return (
               <div key={c.instanceId} style={{ position: 'relative' }}>
                 <CardView
                   card={c}
                   size="normal"
-                  clickable={canBuildThis}
-                  disabled={!canBuildThis}
-                  onClick={() => canBuildThis && setSelectedBuild(c.instanceId)}
+                  clickable={canBuildAny}
+                  disabled={!canBuildAny}
+                  onClick={() => canBuildAny && setSelectedBuild(c.instanceId)}
                 />
-                {canBuildThis && (
+                {canBuildAny && (
                   <div style={{
                     position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)',
                     fontSize: '0.65rem', color: 'var(--color-gold)', background: 'rgba(0,0,0,0.8)',
                     padding: '0 4px', borderRadius: '3px', whiteSpace: 'nowrap'
                   }}>
-                    コスト:{cost}
+                    {!normalBuild && craneBuild ? '建替' : `コスト:${cost}`}
                   </div>
                 )}
               </div>
@@ -434,23 +478,203 @@ function BuilderPanel({
     );
   }
 
-  // 支払いカード選択
   const buildCard = player.hand.find((c) => c.instanceId === selectedBuild)!;
   const buildDef = getCardDef(buildCard);
-  const cost = getBuildCost(state, 0, buildDef.id);
+
+  // Step 2: クレーン対象選択
+  if (hasCrane && !craneDecided) {
+    const normalOk = canBuild(state, 0, selectedBuild);
+    const craneTargets: number[] = [];
+    for (let i = 0; i < player.buildings.length; i++) {
+      if (canBuild(state, 0, selectedBuild, i)) {
+        craneTargets.push(i);
+      }
+    }
+
+    // クレーン対象がない場合はスキップ
+    if (craneTargets.length === 0) {
+      setCraneDecided(true);
+    } else {
+      return (
+        <div className="action-panel">
+          <h3>建築士 - {buildDef.name} の建て替え</h3>
+          <p>建て替える建物を選択するか、新規建設してください。</p>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
+            {craneTargets.map((idx) => {
+              const b = player.buildings[idx];
+              const targetDef = getCardDef(b.card);
+              const craneCost = getBuildCost(state, 0, buildDef.id, targetDef.id);
+              return (
+                <div key={b.card.instanceId} style={{ position: 'relative' }}>
+                  <CardView
+                    card={b.card}
+                    size="small"
+                    good={b.good}
+                    clickable
+                    onClick={() => {
+                      setCraneTarget(idx);
+                      setCraneDecided(true);
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)',
+                    fontSize: '0.65rem', color: 'var(--color-gold)', background: 'rgba(0,0,0,0.8)',
+                    padding: '0 4px', borderRadius: '3px', whiteSpace: 'nowrap'
+                  }}>
+                    差額:{craneCost}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="action-buttons">
+            {normalOk && (
+              <button onClick={() => {
+                setCraneTarget(undefined);
+                setCraneDecided(true);
+              }}>
+                新規建設
+              </button>
+            )}
+            <button onClick={resetAll}>戻る</button>
+            <button className="skip" onClick={() => { resetAll(); dispatch({ type: 'SKIP_BUILD' }); }}>
+              パス
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  const craneTargetDefId = craneTarget !== undefined
+    ? player.buildings[craneTarget].card.defId
+    : undefined;
+  const baseCost = getBuildCost(state, 0, buildDef.id, craneTargetDefId);
+
+  // Step 3: 闇市場 - 商品選択
+  if (hasBlackMarket && !goodsDecided) {
+    const goodBuildings = player.buildings
+      .map((b, i) => ({ building: b, index: i }))
+      .filter(({ building }) => building.good !== null);
+
+    if (goodBuildings.length === 0 || baseCost === 0) {
+      setGoodsDecided(true);
+    } else {
+      const maxGoods = Math.min(2, goodBuildings.length, baseCost);
+
+      const toggleGood = (idx: number) => {
+        const next = new Set(selectedGoods);
+        if (next.has(idx)) next.delete(idx);
+        else if (next.size < maxGoods) next.add(idx);
+        setSelectedGoods(next);
+      };
+
+      return (
+        <div className="action-panel">
+          <h3>闇市場 - {buildDef.name} (コスト: {baseCost})</h3>
+          <p>支払いに使う商品を選択 (最大{maxGoods}個)。使わない場合はスキップ。</p>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
+            {goodBuildings.map(({ building: b, index: idx }) => (
+              <div key={b.card.instanceId} style={{ position: 'relative' }}>
+                <CardView
+                  card={b.card}
+                  size="small"
+                  good={b.good}
+                  clickable
+                  selected={selectedGoods.has(idx)}
+                  onClick={() => toggleGood(idx)}
+                />
+                {b.good && (
+                  <div style={{
+                    position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)',
+                    fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.8)',
+                    padding: '0 4px', borderRadius: '3px', whiteSpace: 'nowrap'
+                  }}>
+                    {GOOD_NAMES[b.good]}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="action-buttons">
+            {selectedGoods.size > 0 && (
+              <button className="primary" onClick={() => setGoodsDecided(true)}>
+                {selectedGoods.size}個使用する
+              </button>
+            )}
+            <button onClick={() => { setSelectedGoods(new Set()); setGoodsDecided(true); }}>
+              商品を使わない
+            </button>
+            <button onClick={() => { setSelectedGoods(new Set()); setCraneTarget(undefined); setCraneDecided(false); }}>
+              戻る
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Step 4: 支払いカード選択
+  const goodsCount = selectedGoods.size;
+  const cardCost = Math.max(0, baseCost - goodsCount);
   const payableCards = player.hand.filter((c) => c.instanceId !== selectedBuild);
 
   const togglePayment = (id: number) => {
     const next = new Set(selectedPayment);
     if (next.has(id)) next.delete(id);
-    else if (next.size < cost) next.add(id);
+    else if (next.size < cardCost) next.add(id);
     setSelectedPayment(next);
   };
 
+  // コスト0なら即建設
+  if (cardCost === 0) {
+    const blackMarketGoods: GoodType[] = [];
+    selectedGoods.forEach((idx) => {
+      const good = player.buildings[idx].good;
+      if (good) blackMarketGoods.push(good);
+    });
+
+    return (
+      <div className="action-panel">
+        <h3>建築士 - {buildDef.name} を建設 (コスト: 0)</h3>
+        {craneTarget !== undefined && <p>建て替え: {getCardDef(player.buildings[craneTarget].card).name}</p>}
+        {goodsCount > 0 && <p>闇市場: 商品{goodsCount}個使用</p>}
+        <div className="action-buttons">
+          <button
+            className="primary"
+            onClick={() => {
+              dispatch({
+                type: 'BUILD',
+                cardInstanceId: selectedBuild,
+                paymentCardIds: [],
+                craneTargetIndex: craneTarget,
+                blackMarketGoods: blackMarketGoods.length > 0 ? blackMarketGoods : undefined,
+              });
+              resetAll();
+            }}
+          >
+            建設
+          </button>
+          <button onClick={resetAll}>戻る</button>
+          <button className="skip" onClick={() => { resetAll(); dispatch({ type: 'SKIP_BUILD' }); }}>
+            パス
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const blackMarketGoods: GoodType[] = [];
+  selectedGoods.forEach((idx) => {
+    const good = player.buildings[idx].good;
+    if (good) blackMarketGoods.push(good);
+  });
+
   return (
     <div className="action-panel">
-      <h3>建築士 - {buildDef.name} の支払い (コスト: {cost})</h3>
-      <p>支払うカードを{cost}枚選択してください</p>
+      <h3>建築士 - {buildDef.name} の支払い (コスト: {cardCost}{goodsCount > 0 ? ` [商品${goodsCount}個使用]` : ''})</h3>
+      <p>支払うカードを{cardCost}枚選択してください</p>
+      {craneTarget !== undefined && <p>建て替え: {getCardDef(player.buildings[craneTarget].card).name}</p>}
       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
         {payableCards.map((c) => (
           <CardView
@@ -466,27 +690,22 @@ function BuilderPanel({
       <div className="action-buttons">
         <button
           className="primary"
-          disabled={selectedPayment.size !== cost}
+          disabled={selectedPayment.size !== cardCost}
           onClick={() => {
             dispatch({
               type: 'BUILD',
               cardInstanceId: selectedBuild,
               paymentCardIds: Array.from(selectedPayment),
+              craneTargetIndex: craneTarget,
+              blackMarketGoods: blackMarketGoods.length > 0 ? blackMarketGoods : undefined,
             });
-            setSelectedBuild(null);
-            setSelectedPayment(new Set());
+            resetAll();
           }}
         >
-          建設 ({selectedPayment.size}/{cost})
+          建設 ({selectedPayment.size}/{cardCost})
         </button>
-        <button onClick={() => { setSelectedBuild(null); setSelectedPayment(new Set()); }}>
-          戻る
-        </button>
-        <button className="skip" onClick={() => {
-          setSelectedBuild(null);
-          setSelectedPayment(new Set());
-          dispatch({ type: 'SKIP_BUILD' });
-        }}>
+        <button onClick={resetAll}>戻る</button>
+        <button className="skip" onClick={() => { resetAll(); dispatch({ type: 'SKIP_BUILD' }); }}>
           パス
         </button>
       </div>
@@ -770,6 +989,125 @@ function ChapelPanel({
           onClick={() => dispatch({ type: 'SKIP_CHAPEL' })}
         >
           格納しない
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Hand Limit Panel
+function HandLimitPanel({
+  state,
+  dispatch,
+}: {
+  state: GameState;
+  dispatch: React.Dispatch<GameAction>;
+}) {
+  const player = state.players[state.executingPlayerIndex];
+  const discardCount = getDiscardExcessCount(state, state.executingPlayerIndex);
+  const [selected, setSelected] = React.useState<Set<number>>(new Set());
+
+  const toggleCard = (id: number) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else if (next.size < discardCount) next.add(id);
+    setSelected(next);
+  };
+
+  const limit = getHandLimit(player.buildings);
+
+  return (
+    <div className="action-panel">
+      <h3>手札上限超過 - {discardCount}枚捨ててください</h3>
+      <p>手札が上限({limit}枚)を超えています。捨てるカードを選択してください。</p>
+      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
+        {player.hand.map((c) => (
+          <CardView
+            key={c.instanceId}
+            card={c}
+            size="normal"
+            clickable
+            selected={selected.has(c.instanceId)}
+            onClick={() => toggleCard(c.instanceId)}
+          />
+        ))}
+      </div>
+      <div className="action-buttons">
+        <button
+          className="primary"
+          disabled={selected.size !== discardCount}
+          onClick={() => {
+            dispatch({
+              type: 'DISCARD_EXCESS',
+              cardInstanceIds: Array.from(selected),
+            });
+            setSelected(new Set());
+          }}
+        >
+          捨てる ({selected.size}/{discardCount})
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Archive Panel
+function ArchivePanel({
+  state,
+  dispatch,
+}: {
+  state: GameState;
+  dispatch: React.Dispatch<GameAction>;
+}) {
+  const player = state.players[state.executingPlayerIndex];
+  const [selected, setSelected] = React.useState<Set<number>>(new Set());
+
+  const toggleCard = (id: number) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelected(next);
+  };
+
+  return (
+    <div className="action-panel">
+      <h3>公文書館 - 手札から捨てるカードを選択</h3>
+      <p>任意の枚数を捨てられます。捨てない場合はスキップしてください。</p>
+      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
+        {player.hand.map((c) => (
+          <CardView
+            key={c.instanceId}
+            card={c}
+            size="normal"
+            clickable
+            selected={selected.has(c.instanceId)}
+            onClick={() => toggleCard(c.instanceId)}
+          />
+        ))}
+      </div>
+      <div className="action-buttons">
+        {selected.size > 0 && (
+          <button
+            className="primary"
+            onClick={() => {
+              dispatch({
+                type: 'ARCHIVE_DISCARD',
+                cardInstanceIds: Array.from(selected),
+              });
+              setSelected(new Set());
+            }}
+          >
+            {selected.size}枚捨てる
+          </button>
+        )}
+        <button
+          className="skip"
+          onClick={() => {
+            dispatch({ type: 'SKIP_ARCHIVE' });
+            setSelected(new Set());
+          }}
+        >
+          捨てない
         </button>
       </div>
     </div>

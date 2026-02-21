@@ -24,6 +24,8 @@ export type SubPhase =
   | 'select_good'
   | 'select_cards'
   | 'chapel_tuck'
+  | 'archive_select'
+  | 'discard_excess'
   | 'waiting'
   | null;
 

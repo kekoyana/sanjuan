@@ -22,6 +22,10 @@ import {
   markPlayerCompleted,
   advanceToNextPlayer,
   isLibraryActive,
+  needsDiscardExcess,
+  getDiscardExcessCount,
+  executeDiscardExcess,
+  executeArchiveDiscard,
 } from './engine';
 import { GameState, PlayerState, Building, Card } from './types';
 import { resetInstanceIdCounter } from './utils';
@@ -835,5 +839,149 @@ describe('isLibraryActive', () => {
   it('returns false when player is role chooser but has no library', () => {
     const state = makeGameState({ roleChooser: 0 });
     expect(isLibraryActive(state, 0)).toBe(false);
+  });
+});
+
+// ==================== 手札上限 ====================
+
+describe('needsDiscardExcess', () => {
+  it('returns true when hand exceeds default limit', () => {
+    const hand = Array.from({ length: 8 }, (_, i) => makeCard('indigo_plant', 2000 + i));
+    const state = makeGameState({
+      players: [
+        makePlayer(0, { hand }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    expect(needsDiscardExcess(state, 0)).toBe(true);
+  });
+
+  it('returns false when hand is within limit', () => {
+    const hand = Array.from({ length: 7 }, (_, i) => makeCard('indigo_plant', 2000 + i));
+    const state = makeGameState({
+      players: [
+        makePlayer(0, { hand }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    expect(needsDiscardExcess(state, 0)).toBe(false);
+  });
+
+  it('uses tower limit (12) when player has tower', () => {
+    const hand = Array.from({ length: 10 }, (_, i) => makeCard('indigo_plant', 2000 + i));
+    const state = makeGameState({
+      players: [
+        makePlayer(0, { hand, buildings: [makeBuilding('tower')] }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    expect(needsDiscardExcess(state, 0)).toBe(false);
+  });
+});
+
+describe('getDiscardExcessCount', () => {
+  it('returns correct excess count', () => {
+    const hand = Array.from({ length: 10 }, (_, i) => makeCard('indigo_plant', 2000 + i));
+    const state = makeGameState({
+      players: [
+        makePlayer(0, { hand }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    expect(getDiscardExcessCount(state, 0)).toBe(3); // 10 - 7 = 3
+  });
+
+  it('returns 0 when hand is within limit', () => {
+    const state = makeGameState();
+    expect(getDiscardExcessCount(state, 0)).toBe(0);
+  });
+});
+
+describe('executeDiscardExcess', () => {
+  it('removes selected cards from hand and adds to discard', () => {
+    const cards = Array.from({ length: 9 }, (_, i) => makeCard('indigo_plant', 3000 + i));
+    const state = makeGameState({
+      players: [
+        makePlayer(0, { hand: cards }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    const result = executeDiscardExcess(state, 0, [3000, 3001]);
+    expect(result.players[0].hand.length).toBe(7);
+    expect(result.discard.length).toBe(2);
+    expect(result.players[0].hand.some((c) => c.instanceId === 3000)).toBe(false);
+    expect(result.players[0].hand.some((c) => c.instanceId === 3001)).toBe(false);
+  });
+});
+
+// ==================== 公文書館 ====================
+
+describe('executeArchiveDiscard', () => {
+  it('removes selected cards from hand', () => {
+    const cards = [makeCard('chapel', 4000), makeCard('smithy', 4001), makeCard('well', 4002)];
+    const state = makeGameState({
+      players: [
+        makePlayer(0, { hand: cards }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    const result = executeArchiveDiscard(state, 0, [4000, 4002]);
+    expect(result.players[0].hand.length).toBe(1);
+    expect(result.players[0].hand[0].instanceId).toBe(4001);
+    expect(result.discard.length).toBe(2);
+  });
+
+  it('handles empty discard list', () => {
+    const cards = [makeCard('chapel', 4000)];
+    const state = makeGameState({
+      players: [
+        makePlayer(0, { hand: cards }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    const result = executeArchiveDiscard(state, 0, []);
+    expect(result.players[0].hand.length).toBe(1);
+    expect(result.discard.length).toBe(0);
+  });
+});
+
+describe('executeCouncillor with archive', () => {
+  it('AI with archive discards excess cards', () => {
+    const hand = Array.from({ length: 6 }, (_, i) => makeCard('indigo_plant', 5000 + i));
+    const drawnCards = [makeCard('chapel', 6000), makeCard('smithy', 6001)];
+    const state = makeGameState({
+      currentRole: 'councillor',
+      roleChooser: 1,
+      executingPlayerIndex: 1,
+      drawnCards,
+      players: [
+        makePlayer(0),
+        makePlayer(1, {
+          hand,
+          buildings: [makeBuilding('indigo_plant'), makeBuilding('archive')],
+          isHuman: false,
+        }),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    // Keep both drawn cards → hand becomes 8 → exceeds 7
+    const result = executeCouncillor(state, 1, [6000, 6001]);
+    // AI should have used archive + enforceHandLimit to get back to 7
+    expect(result.players[1].hand.length).toBe(7);
   });
 });

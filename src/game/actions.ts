@@ -13,4 +13,7 @@ export type GameAction =
   | { type: 'COUNCILLOR_KEEP'; cardInstanceIds: number[] }
   | { type: 'USE_CHAPEL'; cardInstanceId: number }
   | { type: 'SKIP_CHAPEL' }
+  | { type: 'ARCHIVE_DISCARD'; cardInstanceIds: number[] }
+  | { type: 'SKIP_ARCHIVE' }
+  | { type: 'DISCARD_EXCESS'; cardInstanceIds: number[] }
   | { type: 'ADVANCE' };

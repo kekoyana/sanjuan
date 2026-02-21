@@ -109,40 +109,88 @@ export function aiDecideBuild(
   playerId: number
 ): AIBuildDecision | null {
   const player = state.players[playerId];
+  const hasCrane = hasBuilding(player.buildings, 'crane');
+  const hasBlackMarketBuilding = hasBuilding(player.buildings, 'black_market');
 
-  // 建築可能なカードを探す
-  const buildable: { card: Card; score: number }[] = [];
+  interface BuildOption {
+    card: Card;
+    score: number;
+    craneTargetIndex?: number;
+  }
+
+  const options: BuildOption[] = [];
+
   for (const card of player.hand) {
-    if (canBuild(state, playerId, card.instanceId)) {
-      const def = getCardDef(card);
-      // 既に同じ建物を持っている場合はスキップ
-      if (hasBuilding(player.buildings, def.id)) continue;
+    const def = getCardDef(card);
 
-      let score = def.vp * 10 + def.cost * 2;
-      // 6コスト建物を高く評価
-      if (def.cost === 6) score += 20;
-      // 生産建物のシナジー
-      if (def.type === 'production') {
-        const hasGoods = player.buildings.some(
-          (b) => b.good !== null
-        );
-        if (!hasGoods) score += 5; // 商品がない時は生産建物を優先
+    // 通常建設
+    if (canBuild(state, playerId, card.instanceId)) {
+      if (!hasBuilding(player.buildings, def.id)) {
+        let score = def.vp * 10 + def.cost * 2;
+        if (def.cost === 6) score += 20;
+        if (def.type === 'production') {
+          const hasGoods = player.buildings.some((b) => b.good !== null);
+          if (!hasGoods) score += 5;
+        }
+        options.push({ card, score });
       }
-      buildable.push({ card, score });
+    }
+
+    // クレーン建て替え
+    if (hasCrane) {
+      for (let i = 0; i < player.buildings.length; i++) {
+        if (canBuild(state, playerId, card.instanceId, i)) {
+          const targetDef = getCardDef(player.buildings[i].card);
+          const craneCost = getBuildCost(state, playerId, def.id, targetDef.id);
+          // 建て替えのスコア: 新建物の価値 - 旧建物の価値 + コスト削減ボーナス
+          let score = (def.vp - targetDef.vp) * 10 + def.cost * 2;
+          if (def.cost === 6) score += 20;
+          // 同じ建物への建て替えは低評価
+          if (def.id === targetDef.id) score -= 20;
+          // コストが安いほどボーナス
+          score += (def.cost - craneCost) * 2;
+          options.push({ card, score, craneTargetIndex: i });
+        }
+      }
     }
   }
 
-  if (buildable.length === 0) return null;
+  if (options.length === 0) return null;
 
-  // 最高スコアのカードを建てる
-  buildable.sort((a, b) => b.score - a.score);
-  const chosen = buildable[0].card;
-  const def = getCardDef(chosen);
-  const cost = getBuildCost(state, playerId, def.id);
+  options.sort((a, b) => b.score - a.score);
+  const best = options[0];
+  const def = getCardDef(best.card);
+  const craneTargetDefId = best.craneTargetIndex !== undefined
+    ? player.buildings[best.craneTargetIndex].card.defId
+    : undefined;
+  let cost = getBuildCost(state, playerId, def.id, craneTargetDefId);
+
+  // 闇市場: 手札が足りない場合に商品を使用
+  let blackMarketGoods: GoodType[] | undefined;
+  if (hasBlackMarketBuilding && cost > 0) {
+    const handPayable = player.hand.length - 1; // 建設カード自体を除く
+    if (handPayable < cost) {
+      // 手札だけでは足りない → 商品を使う
+      const goodBuildings = player.buildings
+        .filter((b) => b.good !== null)
+        .sort((a, b) => {
+          const priceA = a.good ? TRADE_PRICES[a.good] : 0;
+          const priceB = b.good ? TRADE_PRICES[b.good] : 0;
+          return priceA - priceB; // 安い商品から使う
+        });
+      const needed = Math.min(2, cost - handPayable, goodBuildings.length);
+      if (needed > 0) {
+        blackMarketGoods = goodBuildings
+          .slice(0, needed)
+          .map((b) => b.good!);
+        cost -= needed;
+      }
+    }
+  }
 
   // 支払いカードを選択（最もVP/コストの低いカードから）
   const payableCards = player.hand
-    .filter((c) => c.instanceId !== chosen.instanceId)
+    .filter((c) => c.instanceId !== best.card.instanceId)
     .sort((a, b) => getCardDef(a).vp - getCardDef(b).vp);
 
   const paymentCardIds = payableCards
@@ -150,8 +198,10 @@ export function aiDecideBuild(
     .map((c) => c.instanceId);
 
   return {
-    cardInstanceId: chosen.instanceId,
+    cardInstanceId: best.card.instanceId,
     paymentCardIds,
+    craneTargetIndex: best.craneTargetIndex,
+    blackMarketGoods,
   };
 }
 

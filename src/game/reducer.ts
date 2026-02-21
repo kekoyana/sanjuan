@@ -1,5 +1,6 @@
 import { GameState } from './types';
 import { GameAction } from './actions';
+import { hasBuilding } from './utils';
 import {
   createInitialGameState,
   startGame,
@@ -12,7 +13,23 @@ import {
   advanceToNextPlayer,
   markPlayerCompleted,
   advanceChapelPhase,
+  needsDiscardExcess,
+  executeDiscardExcess,
+  executeArchiveDiscard,
 } from './engine';
+
+function completeAndAdvance(state: GameState, playerId: number): GameState {
+  const player = state.players[playerId];
+
+  // 人間プレイヤーが手札上限超過 → 選択UIへ
+  if (player.isHuman && needsDiscardExcess(state, playerId)) {
+    return { ...state, subPhase: 'discard_excess' };
+  }
+
+  let s = markPlayerCompleted(state, playerId);
+  s = advanceToNextPlayer(s);
+  return s;
+}
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -31,7 +48,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'BUILD': {
-      let s = executeBuild(
+      const s = executeBuild(
         state,
         state.executingPlayerIndex,
         action.cardInstanceId,
@@ -39,9 +56,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         action.craneTargetIndex,
         action.blackMarketGoods
       );
-      s = markPlayerCompleted(s, state.executingPlayerIndex);
-      s = advanceToNextPlayer(s);
-      return s;
+      return completeAndAdvance(s, state.executingPlayerIndex);
     }
 
     case 'SKIP_BUILD': {
@@ -58,14 +73,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'PRODUCE': {
-      let s = executeProduction(
+      const s = executeProduction(
         state,
         state.executingPlayerIndex,
         action.buildingIndices
       );
-      s = markPlayerCompleted(s, state.executingPlayerIndex);
-      s = advanceToNextPlayer(s);
-      return s;
+      return completeAndAdvance(s, state.executingPlayerIndex);
     }
 
     case 'SKIP_PRODUCE': {
@@ -75,14 +88,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'TRADE': {
-      let s = executeTrade(
+      const s = executeTrade(
         state,
         state.executingPlayerIndex,
         action.buildingIndices
       );
-      s = markPlayerCompleted(s, state.executingPlayerIndex);
-      s = advanceToNextPlayer(s);
-      return s;
+      return completeAndAdvance(s, state.executingPlayerIndex);
     }
 
     case 'SKIP_TRADE': {
@@ -99,11 +110,42 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'COUNCILLOR_KEEP': {
-      let s = executeCouncillor(
+      const s = executeCouncillor(
         state,
         state.executingPlayerIndex,
         action.cardInstanceIds
       );
+      const player = s.players[state.executingPlayerIndex];
+
+      // 人間プレイヤーが公文書館を持っている → 公文書館UIへ
+      if (player.isHuman && hasBuilding(player.buildings, 'archive')) {
+        return { ...s, subPhase: 'archive_select' };
+      }
+
+      return completeAndAdvance(s, state.executingPlayerIndex);
+    }
+
+    case 'ARCHIVE_DISCARD': {
+      let s = state;
+      if (action.cardInstanceIds.length > 0) {
+        s = executeArchiveDiscard(s, state.executingPlayerIndex, action.cardInstanceIds);
+      }
+      s = { ...s, subPhase: null };
+      return completeAndAdvance(s, state.executingPlayerIndex);
+    }
+
+    case 'SKIP_ARCHIVE': {
+      const s = { ...state, subPhase: null };
+      return completeAndAdvance(s, state.executingPlayerIndex);
+    }
+
+    case 'DISCARD_EXCESS': {
+      let s = executeDiscardExcess(
+        state,
+        state.executingPlayerIndex,
+        action.cardInstanceIds
+      );
+      s = { ...s, subPhase: null };
       s = markPlayerCompleted(s, state.executingPlayerIndex);
       s = advanceToNextPlayer(s);
       return s;

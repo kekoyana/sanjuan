@@ -117,11 +117,49 @@ function enforceHandLimit(state: GameState, playerId: number): GameState {
     s = discardCards(s, discarded);
     return s;
   }
-  // Human: UIが手札制限を処理するが、安全のため後ろから削除
-  const keep = player.hand.slice(0, limit);
-  const discarded = player.hand.slice(limit);
-  let s = updatePlayer(state, playerId, { hand: keep });
+  // Human: UIで選択させるのでここでは何もしない
+  return state;
+}
+
+export function needsDiscardExcess(state: GameState, playerId: number): boolean {
+  const player = getPlayer(state, playerId);
+  const limit = getHandLimit(player.buildings);
+  return player.hand.length > limit;
+}
+
+export function getDiscardExcessCount(state: GameState, playerId: number): number {
+  const player = getPlayer(state, playerId);
+  const limit = getHandLimit(player.buildings);
+  return Math.max(0, player.hand.length - limit);
+}
+
+export function executeDiscardExcess(
+  state: GameState,
+  playerId: number,
+  cardInstanceIds: number[]
+): GameState {
+  const player = getPlayer(state, playerId);
+  const discarded = player.hand.filter((c) => cardInstanceIds.includes(c.instanceId));
+  const newHand = player.hand.filter((c) => !cardInstanceIds.includes(c.instanceId));
+  let s = updatePlayer(state, playerId, { hand: newHand });
   s = discardCards(s, discarded);
+  s = addLog(s, `${player.name}が${discarded.length}枚捨てた(手札上限)`);
+  return s;
+}
+
+export function executeArchiveDiscard(
+  state: GameState,
+  playerId: number,
+  cardInstanceIds: number[]
+): GameState {
+  const player = getPlayer(state, playerId);
+  const discarded = player.hand.filter((c) => cardInstanceIds.includes(c.instanceId));
+  const newHand = player.hand.filter((c) => !cardInstanceIds.includes(c.instanceId));
+  let s = updatePlayer(state, playerId, { hand: newHand });
+  s = discardCards(s, discarded);
+  if (discarded.length > 0) {
+    s = addLog(s, `${player.name}が公文書館で${discarded.length}枚捨てた`);
+  }
   return s;
 }
 
@@ -617,8 +655,30 @@ export function executeCouncillor(
   s = { ...s, drawnCards: [] };
   s = addLog(s, `${player.name}が${kept.length}枚選択(${totalDrawn}枚から)`);
 
-  // 公文書館: 手札を任意に捨てられる → AIは自動処理
-  // (ここではAIのみ処理。人間は別途UIで処理)
+  // 公文書館: 手札を任意に捨てられる
+  // AIのみここで処理。人間は別途UIで処理
+  if (!getPlayer(s, playerId).isHuman && hasBuilding(getPlayer(s, playerId).buildings, 'archive')) {
+    const archivePlayer = getPlayer(s, playerId);
+    const limit = getHandLimit(archivePlayer.buildings);
+    // AIは手札上限を超えている分と、重複建物カードを捨てる
+    const scored = archivePlayer.hand.map((c) => {
+      const def = getCardDef(c);
+      let score = def.vp * 5 + def.cost;
+      if (hasBuilding(archivePlayer.buildings, def.id)) score -= 15;
+      return { card: c, score };
+    });
+    scored.sort((a, b) => a.score - b.score);
+    const discardCount = Math.max(0, archivePlayer.hand.length - limit);
+    if (discardCount > 0) {
+      const toDiscard = scored.slice(0, discardCount).map((x) => x.card);
+      const keepIds = new Set(archivePlayer.hand.filter((c) => !toDiscard.includes(c)).map((c) => c.instanceId));
+      s = updatePlayer(s, playerId, {
+        hand: archivePlayer.hand.filter((c) => keepIds.has(c.instanceId)),
+      });
+      s = discardCards(s, toDiscard);
+      s = addLog(s, `${archivePlayer.name}が公文書館で${toDiscard.length}枚捨てた`);
+    }
+  }
 
   s = enforceHandLimit(s, playerId);
   return s;
