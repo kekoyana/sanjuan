@@ -28,6 +28,7 @@ import { ScoreBoard } from './components/ScoreBoard';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
+  const [handModalOpen, setHandModalOpen] = React.useState(false);
 
   const timerRef = useRef<number | null>(null);
 
@@ -172,6 +173,12 @@ function App() {
               <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                 建物: {humanPlayer.buildings.length}/12
               </span>
+              <button
+                className="hand-peek-btn"
+                onClick={() => setHandModalOpen(true)}
+              >
+                手札を確認 ({humanPlayer.hand.length})
+              </button>
             </div>
 
             <div className="player-buildings-label">建物</div>
@@ -194,6 +201,25 @@ function App() {
               ))}
             </div>
           </div>
+
+          {/* Hand Modal */}
+          {handModalOpen && (
+            <div className="hand-modal-overlay" onClick={() => setHandModalOpen(false)}>
+              <div className="hand-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="hand-modal-header">
+                  <h3>手札 ({humanPlayer.hand.length}枚)</h3>
+                  <button className="hand-modal-close" onClick={() => setHandModalOpen(false)}>
+                    ✕
+                  </button>
+                </div>
+                <div className="hand-modal-cards">
+                  {humanPlayer.hand.map((c) => (
+                    <CardView key={c.instanceId} card={c} size="normal" />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Action Panel */}
           <ActionPanel state={state} dispatch={dispatch} />

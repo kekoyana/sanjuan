@@ -3,7 +3,6 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(npm run build:*)",
-      "Bash(pkill:*)",
       "Bash(curl:*)",
       "Bash(wc:*)",
       "Bash(find:*)",
