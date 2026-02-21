@@ -755,7 +755,7 @@ function ProducerPanel({
           {producible.map((idx) => {
             const b = player.buildings[idx];
             return (
-              <CardView key={b.card.instanceId} card={b.card} size="small" />
+              <CardView key={b.card.instanceId} card={b.card} size="small" selected />
             );
           })}
         </div>
