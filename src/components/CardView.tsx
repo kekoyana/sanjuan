@@ -1,3 +1,4 @@
+import { useRef, useState, useEffect } from 'react';
 import { Card, GoodType } from '../game/types';
 import { getCardDef } from '../game/utils';
 
@@ -28,6 +29,20 @@ export function CardView({
       ? `type-${def.goodType}`
       : 'type-violet';
 
+  // 商品トークン消失アニメーション
+  const prevGoodRef = useRef<GoodType | null | undefined>(good);
+  const [removingGood, setRemovingGood] = useState<GoodType | null>(null);
+
+  useEffect(() => {
+    if (prevGoodRef.current && !good) {
+      setRemovingGood(prevGoodRef.current);
+      const timer = setTimeout(() => setRemovingGood(null), 300);
+      prevGoodRef.current = good;
+      return () => clearTimeout(timer);
+    }
+    prevGoodRef.current = good;
+  }, [good]);
+
   const classes = [
     'card-view',
     `size-${size}`,
@@ -48,6 +63,9 @@ export function CardView({
       <div className="card-name">{def.name}</div>
       {size !== 'xs' && <div className="card-ability">{def.abilityText}</div>}
       {good && <div className={`goods-token good-${good}`} />}
+      {!good && removingGood && (
+        <div className={`goods-token good-${removingGood} removing`} />
+      )}
       {chapelCards !== undefined && chapelCards > 0 && (
         <div className="chapel-count">+{chapelCards}</div>
       )}

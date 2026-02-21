@@ -108,13 +108,13 @@ function App() {
       {/* Phase Indicator */}
       <div className="phase-indicator">
         {state.currentRole && (
-          <span className="phase-tag">{ROLE_NAMES[state.currentRole]}</span>
+          <span key={`role-${state.currentRole}`} className="phase-tag">{ROLE_NAMES[state.currentRole]}</span>
         )}
         {state.phase === 'role_selection' && (
-          <span className="phase-tag">役職選択</span>
+          <span key="role-selection" className="phase-tag">役職選択</span>
         )}
         {state.phase === 'chapel_phase' && (
-          <span className="phase-tag">礼拝堂</span>
+          <span key="chapel" className="phase-tag">礼拝堂</span>
         )}
         <span className="governor-tag">
           総督: {state.players[state.governorIndex].name}
@@ -206,7 +206,7 @@ function App() {
           <h4>ログ</h4>
           {[...state.log].reverse().map((entry, i) => (
             <div
-              key={i}
+              key={state.log.length - 1 - i}
               className={`log-entry ${entry.startsWith('---') || entry.startsWith('===') ? 'separator' : ''}`}
             >
               {entry}
@@ -365,6 +365,16 @@ function RoleSelectionPanel({
   state: GameState;
   dispatch: React.Dispatch<GameAction>;
 }) {
+  const [chosenRole, setChosenRole] = React.useState<RoleType | null>(null);
+
+  const handleSelect = (role: RoleType) => {
+    if (chosenRole) return;
+    setChosenRole(role);
+    setTimeout(() => {
+      dispatch({ type: 'SELECT_ROLE', role });
+    }, 350);
+  };
+
   const roles: { role: RoleType; desc: string; privilege: string; icon: string; colorClass: string }[] = [
     { role: 'builder', desc: '全員が建物を1つ建設可能', privilege: 'コスト-1', icon: '🏛️', colorClass: 'role-builder' },
     { role: 'producer', desc: '全員が商品を生産', privilege: '追加1個生産', icon: '⚒️', colorClass: 'role-producer' },
@@ -379,12 +389,13 @@ function RoleSelectionPanel({
       <div className="role-card-row">
         {roles.map(({ role, desc, privilege, icon, colorClass }) => {
           const isUsed = state.usedRoles.includes(role);
+          const isChosen = chosenRole === role;
           return (
             <button
               key={role}
-              className={`role-card ${colorClass} ${isUsed ? 'used' : ''}`}
-              disabled={isUsed}
-              onClick={() => dispatch({ type: 'SELECT_ROLE', role })}
+              className={`role-card ${colorClass} ${isUsed ? 'used' : ''} ${isChosen ? 'chosen' : ''}`}
+              disabled={isUsed || chosenRole !== null}
+              onClick={() => handleSelect(role)}
             >
               <div className="role-card-icon">{icon}</div>
               <div className="role-card-name">{ROLE_NAMES[role]}</div>
