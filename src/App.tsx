@@ -389,30 +389,34 @@ function RoleSelectionPanel({
   state: GameState;
   dispatch: React.Dispatch<GameAction>;
 }) {
-  const roles: { role: RoleType; desc: string; privilege: string }[] = [
-    { role: 'builder', desc: '全員が建物を1つ建設可能', privilege: 'コスト-1' },
-    { role: 'producer', desc: '全員が商品を生産', privilege: '追加1個生産' },
-    { role: 'trader', desc: '全員が商品を1つ売却可能', privilege: '売却額+1' },
-    { role: 'councillor', desc: '全員がカードを引いて選択', privilege: '5枚引いて1枚選択' },
-    { role: 'prospector', desc: '選択者のみ1枚ドロー', privilege: '1枚ドロー' },
+  const roles: { role: RoleType; desc: string; privilege: string; icon: string; colorClass: string }[] = [
+    { role: 'builder', desc: '全員が建物を1つ建設可能', privilege: 'コスト-1', icon: '🏛️', colorClass: 'role-builder' },
+    { role: 'producer', desc: '全員が商品を生産', privilege: '追加1個生産', icon: '⚒️', colorClass: 'role-producer' },
+    { role: 'trader', desc: '全員が商品を1つ売却可能', privilege: '売却額+1', icon: '⚖️', colorClass: 'role-trader' },
+    { role: 'councillor', desc: '全員がカードを引いて選択', privilege: '5枚引いて1枚選択', icon: '📜', colorClass: 'role-councillor' },
+    { role: 'prospector', desc: '選択者のみ1枚ドロー', privilege: '1枚ドロー', icon: '⛏️', colorClass: 'role-prospector' },
   ];
 
   return (
     <div className="action-panel">
       <h3>役職を選択してください</h3>
-      <div className="role-selection">
-        {roles.map(({ role, desc, privilege }) => (
-          <button
-            key={role}
-            className="role-btn"
-            disabled={state.usedRoles.includes(role)}
-            onClick={() => dispatch({ type: 'SELECT_ROLE', role })}
-          >
-            <span className="role-name">{ROLE_NAMES[role]}</span>
-            <span className="role-desc">{desc}</span>
-            <span className="role-privilege">{privilege}</span>
-          </button>
-        ))}
+      <div className="role-card-row">
+        {roles.map(({ role, desc, privilege, icon, colorClass }) => {
+          const isUsed = state.usedRoles.includes(role);
+          return (
+            <button
+              key={role}
+              className={`role-card ${colorClass} ${isUsed ? 'used' : ''}`}
+              disabled={isUsed}
+              onClick={() => dispatch({ type: 'SELECT_ROLE', role })}
+            >
+              <div className="role-card-icon">{icon}</div>
+              <div className="role-card-name">{ROLE_NAMES[role]}</div>
+              <div className="role-card-desc">{desc}</div>
+              <div className="role-card-privilege">{privilege}</div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
