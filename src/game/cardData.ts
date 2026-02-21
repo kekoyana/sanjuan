@@ -72,7 +72,7 @@ export const CARD_DEFS: CardDef[] = [
     vp: 1,
     count: 3,
     ability: 'goldmine',
-    abilityText: '生産時: 山札4枚公開、全て異なるコストなら1枚獲得',
+    abilityText: '金鉱掘り時: 山札4枚公開、全て異なるコストなら1枚獲得',
   },
   {
     id: 'archive',

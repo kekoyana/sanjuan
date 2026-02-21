@@ -705,6 +705,81 @@ describe('executeProspector', () => {
     const result = executeProspector(state, 0);
     expect(result.players[0].hand.length).toBe(0);
   });
+
+  it('goldmine triggers during prospector: gains 1 card when all 4 costs differ', () => {
+    // drawCardsはpop()で末尾から引く。金鉱掘りで1枚引いた後、金鉱用に4枚引く
+    const state = makeGameState({
+      roleChooser: 0,
+      deck: [
+        ...Array.from({ length: 20 }, (_, i) => makeCard('indigo_plant', 3000 + i)),
+        makeCard('coffee_roaster', 2004),  // cost 4 (金鉱4枚目)
+        makeCard('tobacco_storage', 2003), // cost 3 (金鉱3枚目)
+        makeCard('sugar_mill', 2002),      // cost 2 (金鉱2枚目)
+        makeCard('indigo_plant', 2001),    // cost 1 (金鉱1枚目)
+        makeCard('indigo_plant', 2000),    // 金鉱掘りドロー用
+      ],
+      players: [
+        makePlayer(0, { hand: [], buildings: [makeBuilding('goldmine')] }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    const result = executeProspector(state, 0);
+    // 金鉱掘りの1枚 + 金鉱の1枚 = 2枚
+    expect(result.players[0].hand.length).toBe(2);
+    expect(result.log.some(l => l.includes('金鉱で'))).toBe(true);
+  });
+
+  it('goldmine triggers during prospector: no gain when costs overlap', () => {
+    const state = makeGameState({
+      roleChooser: 0,
+      deck: [
+        ...Array.from({ length: 20 }, (_, i) => makeCard('indigo_plant', 3000 + i)),
+        makeCard('tobacco_storage', 2004), // cost 3
+        makeCard('sugar_mill', 2003),      // cost 2
+        makeCard('indigo_plant', 2002),    // cost 1 (重複)
+        makeCard('indigo_plant', 2001),    // cost 1 (重複)
+        makeCard('indigo_plant', 2000),    // 金鉱掘りドロー用
+      ],
+      players: [
+        makePlayer(0, { hand: [], buildings: [makeBuilding('goldmine')] }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    const result = executeProspector(state, 0);
+    // 金鉱掘りの1枚のみ、金鉱の効果は不発
+    expect(result.players[0].hand.length).toBe(1);
+    expect(result.log.some(l => l.includes('コストが重複'))).toBe(true);
+  });
+
+  it('goldmine does not trigger for non-chooser', () => {
+    // 金鉱掘りを選んでいないプレイヤーの金鉱は発動しない
+    const state = makeGameState({
+      roleChooser: 0,
+      deck: [
+        ...Array.from({ length: 20 }, (_, i) => makeCard('indigo_plant', 3000 + i)),
+        makeCard('coffee_roaster', 2004),
+        makeCard('tobacco_storage', 2003),
+        makeCard('sugar_mill', 2002),
+        makeCard('indigo_plant', 2001),
+        makeCard('indigo_plant', 2000),
+      ],
+      players: [
+        makePlayer(0, { hand: [] }),
+        makePlayer(1, { hand: [], buildings: [makeBuilding('goldmine')] }),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    const result = executeProspector(state, 0);
+    // プレイヤー0: 金鉱掘りの1枚のみ
+    expect(result.players[0].hand.length).toBe(1);
+    // プレイヤー1: 金鉱を持っているが選択者でないので発動しない
+    expect(result.players[1].hand.length).toBe(0);
+  });
 });
 
 // ==================== 礼拝堂 ====================

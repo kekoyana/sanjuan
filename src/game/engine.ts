@@ -477,34 +477,6 @@ export function executeProduction(
     s = addLog(s, `${player.name}: 井戸で${drawCount}枚引いた`);
   }
 
-  // 金鉱: 山札4枚公開、全て異なるコストなら1枚獲得
-  if (hasBuilding(newBuildings, 'goldmine')) {
-    const result = drawCards(s.deck, s.discard, 4);
-    s = { ...s, deck: result.deck, discard: result.discard };
-    const costs = new Set(result.drawn.map((c) => getCardDef(c).cost));
-    if (costs.size === result.drawn.length && result.drawn.length === 4) {
-      // 全て異なるコスト → AIは最もコストの高いカードを取る
-      const sorted = [...result.drawn].sort(
-        (a, b) => getCardDef(b).cost - getCardDef(a).cost
-      );
-      const kept = sorted[0];
-      const returned = result.drawn.filter(
-        (c) => c.instanceId !== kept.instanceId
-      );
-      s = updatePlayer(s, playerId, {
-        hand: [...getPlayer(s, playerId).hand, kept],
-      });
-      s = discardCards(s, returned);
-      s = addLog(
-        s,
-        `${player.name}: 金鉱で${getCardDef(kept).name}を獲得`
-      );
-    } else {
-      s = discardCards(s, result.drawn);
-      s = addLog(s, `${player.name}: 金鉱 - コストが重複、獲得なし`);
-    }
-  }
-
   return s;
 }
 
@@ -696,6 +668,37 @@ export function executeProspector(
     const player = getPlayer(s, playerId);
     s = addLog(s, `${player.name}が1枚引いた(金鉱掘り)`);
   }
+
+  // 金鉱: 金鉱掘りを選んだプレイヤーのみ、山札4枚公開、全て異なるコストなら1枚獲得
+  if (state.roleChooser === playerId) {
+    const player2 = getPlayer(s, playerId);
+    if (hasBuilding(player2.buildings, 'goldmine')) {
+      const mult = libraryMultiplier(s, playerId);
+      const result = drawCards(s.deck, s.discard, 4);
+      s = { ...s, deck: result.deck, discard: result.discard };
+      const costs = new Set(result.drawn.map((c) => getCardDef(c).cost));
+      if (costs.size === result.drawn.length && result.drawn.length === 4) {
+        const sorted = [...result.drawn].sort(
+          (a, b) => getCardDef(b).cost - getCardDef(a).cost
+        );
+        const keepCount = Math.min(1 * mult, sorted.length);
+        const kept = sorted.slice(0, keepCount);
+        const returned = result.drawn.filter(
+          (c) => !kept.some((k) => k.instanceId === c.instanceId)
+        );
+        s = updatePlayer(s, playerId, {
+          hand: [...getPlayer(s, playerId).hand, ...kept],
+        });
+        s = discardCards(s, returned);
+        const keptNames = kept.map((c) => getCardDef(c).name).join('、');
+        s = addLog(s, `${player2.name}: 金鉱で${keptNames}を獲得`);
+      } else {
+        s = discardCards(s, result.drawn);
+        s = addLog(s, `${player2.name}: 金鉱 - コストが重複、獲得なし`);
+      }
+    }
+  }
+
   return s;
 }
 
