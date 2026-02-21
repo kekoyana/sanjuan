@@ -145,6 +145,13 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
+}
+
+.board-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ==================== Opponents Row ==================== */
@@ -210,10 +217,8 @@
 
 /* ==================== Player Area ==================== */
 .player-section {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   padding: 8px 12px;
   background: rgba(245, 230, 200, 0.04);
 }
@@ -249,22 +254,6 @@
   padding-bottom: 2px;
 }
 
-.hand-peek-btn {
-  margin-left: auto;
-  padding: 4px 14px;
-  font-size: 0.88rem;
-  font-family: 'Noto Serif JP', serif;
-  background: rgba(196, 149, 42, 0.15);
-  color: var(--color-gold);
-  border: 1px solid var(--color-gold);
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.hand-peek-btn:hover {
-  background: rgba(196, 149, 42, 0.3);
-  box-shadow: 0 0 8px var(--shadow-gold);
-}
 
 .player-buildings {
   display: flex;
@@ -275,10 +264,9 @@
 
 .player-hand {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
 }
 
 /* ==================== Card Component ==================== */
@@ -891,70 +879,6 @@
   animation: cardDeal 0.3s ease-out;
 }
 
-/* ==================== Hand Modal ==================== */
-.hand-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fadeIn 0.15s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.hand-modal {
-  background: linear-gradient(180deg, #3a2a18 0%, #2c1e10 100%);
-  border: 2px solid var(--color-gold);
-  border-radius: 8px;
-  padding: 16px;
-  max-width: 90vw;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 24px var(--shadow-gold);
-}
-
-.hand-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
-}
-
-.hand-modal-header h3 {
-  font-family: 'Cinzel', 'Noto Serif JP', serif;
-  font-size: 1.1rem;
-  color: var(--color-gold);
-}
-
-.hand-modal-close {
-  background: transparent;
-  color: var(--text-on-dark-muted);
-  font-size: 1.2rem;
-  padding: 4px 8px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.hand-modal-close:hover {
-  color: var(--text-on-dark);
-  border-color: var(--text-on-dark-muted);
-}
-
-.hand-modal-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-}
 
 /* ==================== Mobile ==================== */
 @media (max-width: 767px) {

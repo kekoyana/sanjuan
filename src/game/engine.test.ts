@@ -313,7 +313,25 @@ describe('canBuild', () => {
     expect(canBuild(state, 0, 100)).toBe(true);
   });
 
-  it('returns false for duplicate building', () => {
+  it('returns false for duplicate violet building', () => {
+    const card = makeCard('smithy', 100);
+    const paymentCard = makeCard('indigo_plant', 101);
+    const state = makeGameState({
+      roleChooser: 0,
+      players: [
+        makePlayer(0, {
+          hand: [card, paymentCard],
+          buildings: [makeBuilding('smithy')],
+        }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    expect(canBuild(state, 0, 100)).toBe(false);
+  });
+
+  it('allows duplicate production building', () => {
     const card = makeCard('indigo_plant', 100);
     const state = makeGameState({
       roleChooser: 0,
@@ -327,7 +345,7 @@ describe('canBuild', () => {
         makePlayer(3),
       ],
     });
-    expect(canBuild(state, 0, 100)).toBe(false);
+    expect(canBuild(state, 0, 100)).toBe(true);
   });
 
   it('returns false when card is not in hand', () => {

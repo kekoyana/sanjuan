@@ -125,12 +125,15 @@ export function aiDecideBuild(
 
     // 通常建設
     if (canBuild(state, playerId, card.instanceId)) {
-      if (!hasBuilding(player.buildings, def.id)) {
+      if (def.type === 'production' || !hasBuilding(player.buildings, def.id)) {
         let score = def.vp * 10 + def.cost * 2;
         if (def.cost === 6) score += 20;
         if (def.type === 'production') {
           const hasGoods = player.buildings.some((b) => b.good !== null);
           if (!hasGoods) score += 5;
+          // 同じ生産施設の2つ目以降はスコアを下げる
+          const sameCount = player.buildings.filter((b) => b.card.defId === def.id).length;
+          if (sameCount > 0) score -= sameCount * 3;
         }
         options.push({ card, score });
       }
@@ -264,14 +267,12 @@ export function aiDecideCouncillor(
   const scored = drawn.map((card) => {
     const def = getCardDef(card);
     let score = def.vp * 5 + def.cost;
-    // 既に持っている建物は低評価
-    if (hasBuilding(player.buildings, def.id)) score -= 10;
+    // 既に持っている建物は低評価（生産施設は軽減）
+    if (hasBuilding(player.buildings, def.id)) {
+      score -= def.type === 'production' ? 3 : 10;
+    }
     // コスト6は高評価
     if (def.cost === 6) score += 8;
-    // 生産建物で空きスロットがなければ低評価
-    if (def.type === 'production' && hasBuilding(player.buildings, def.id)) {
-      score -= 5;
-    }
     return { card, score };
   });
 

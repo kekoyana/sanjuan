@@ -28,7 +28,6 @@ import { ScoreBoard } from './components/ScoreBoard';
 
 function App() {
   const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
-  const [handModalOpen, setHandModalOpen] = React.useState(false);
 
   const timerRef = useRef<number | null>(null);
 
@@ -132,94 +131,71 @@ function App() {
 
       <div className="game-main">
         <div className="game-content">
-          {/* Opponents */}
-          <div className="opponents-row">
-            {opponents.map((p) => (
-              <div
-                key={p.id}
-                className={`opponent-area ${(state.phase === 'role_selection' ? state.currentRoleSelector : state.executingPlayerIndex) === p.id ? 'is-active' : ''}`}
-              >
-                <div className="opponent-header">
-                  <span className="name">{p.name}</span>
-                  {state.governorIndex === p.id && (
-                    <span className="governor-badge">★</span>
-                  )}
-                  <span className="hand-count">
-                    手札{p.hand.length} 建物{p.buildings.length}
-                  </span>
+          <div className="board-scroll">
+            {/* Opponents */}
+            <div className="opponents-row">
+              {opponents.map((p) => (
+                <div
+                  key={p.id}
+                  className={`opponent-area ${(state.phase === 'role_selection' ? state.currentRoleSelector : state.executingPlayerIndex) === p.id ? 'is-active' : ''}`}
+                >
+                  <div className="opponent-header">
+                    <span className="name">{p.name}</span>
+                    {state.governorIndex === p.id && (
+                      <span className="governor-badge">★</span>
+                    )}
+                    <span className="hand-count">
+                      手札{p.hand.length} 建物{p.buildings.length}
+                    </span>
+                  </div>
+                  <div className="opponent-buildings">
+                    {p.buildings.map((b) => (
+                      <CardView
+                        key={b.card.instanceId}
+                        card={b.card}
+                        size="xs"
+                        good={b.good}
+                        chapelCards={b.chapelCards}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="opponent-buildings">
-                  {p.buildings.map((b) => (
-                    <CardView
-                      key={b.card.instanceId}
-                      card={b.card}
-                      size="xs"
-                      good={b.good}
-                      chapelCards={b.chapelCards}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Player Area */}
-          <div className="player-section">
-            <div className="player-header">
-              <span className="name">{humanPlayer.name}</span>
-              {state.governorIndex === 0 && (
-                <span className="governor-badge">★ 総督</span>
-              )}
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                建物: {humanPlayer.buildings.length}/12
-              </span>
-              <button
-                className="hand-peek-btn"
-                onClick={() => setHandModalOpen(true)}
-              >
-                手札を確認 ({humanPlayer.hand.length})
-              </button>
-            </div>
-
-            <div className="player-buildings-label">建物</div>
-            <div className="player-buildings">
-              {humanPlayer.buildings.map((b) => (
-                <CardView
-                  key={b.card.instanceId}
-                  card={b.card}
-                  size="small"
-                  good={b.good}
-                  chapelCards={b.chapelCards}
-                />
               ))}
             </div>
 
-            <div className="player-hand-label">手札 ({humanPlayer.hand.length})</div>
-            <div className="player-hand">
-              {humanPlayer.hand.map((c) => (
-                <CardView key={c.instanceId} card={c} size="normal" />
-              ))}
-            </div>
-          </div>
+            {/* Player Area */}
+            <div className="player-section">
+              <div className="player-header">
+                <span className="name">{humanPlayer.name}</span>
+                {state.governorIndex === 0 && (
+                  <span className="governor-badge">★ 総督</span>
+                )}
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                  建物: {humanPlayer.buildings.length}/12
+                </span>
+              </div>
 
-          {/* Hand Modal */}
-          {handModalOpen && (
-            <div className="hand-modal-overlay" onClick={() => setHandModalOpen(false)}>
-              <div className="hand-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="hand-modal-header">
-                  <h3>手札 ({humanPlayer.hand.length}枚)</h3>
-                  <button className="hand-modal-close" onClick={() => setHandModalOpen(false)}>
-                    ✕
-                  </button>
-                </div>
-                <div className="hand-modal-cards">
-                  {humanPlayer.hand.map((c) => (
-                    <CardView key={c.instanceId} card={c} size="normal" />
-                  ))}
-                </div>
+              <div className="player-buildings-label">建物</div>
+              <div className="player-buildings">
+                {humanPlayer.buildings.map((b) => (
+                  <CardView
+                    key={b.card.instanceId}
+                    card={b.card}
+                    size="small"
+                    good={b.good}
+                    chapelCards={b.chapelCards}
+                  />
+                ))}
+              </div>
+
+              <div className="player-hand-label">手札 ({humanPlayer.hand.length})</div>
+              <div className="player-hand">
+                {humanPlayer.hand.map((c) => (
+                  <CardView key={c.instanceId} card={c} size="normal" />
+                ))}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Action Panel */}
           <ActionPanel state={state} dispatch={dispatch} />

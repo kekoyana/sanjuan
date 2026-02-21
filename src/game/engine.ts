@@ -286,8 +286,8 @@ export function canBuild(
 
   const def = getCardDef(card);
 
-  // 同じ建物は建てられない(クレーン建て替えを除く)
-  if (craneTargetIndex === undefined) {
+  // 同じ建物は建てられない(生産施設とクレーン建て替えを除く)
+  if (craneTargetIndex === undefined && def.type !== 'production') {
     if (hasBuilding(player.buildings, def.id)) return false;
   }
 
