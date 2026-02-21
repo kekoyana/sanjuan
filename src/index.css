@@ -1,0 +1,62 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-tertiary: #0f3460;
+  --bg-card: #1e2a45;
+  --border: #2a3a5a;
+  --border-highlight: #5a7aaa;
+  --text-primary: #e0e0e0;
+  --text-secondary: #8899aa;
+  --text-muted: #556677;
+
+  --color-indigo: #5c6bc0;
+  --color-sugar: #e8d5a3;
+  --color-tobacco: #8d6e63;
+  --color-coffee: #6d4c41;
+  --color-silver: #b0bec5;
+  --color-violet: #7e57c2;
+  --color-production: #2e7d32;
+
+  --color-gold: #ffd54f;
+  --color-blue: #42a5f5;
+  --color-red: #ef5350;
+  --color-green: #66bb6a;
+
+  --card-w: 90px;
+  --card-h: 130px;
+  --card-w-sm: 60px;
+  --card-h-sm: 88px;
+  --card-w-xs: 45px;
+  --card-h-xs: 66px;
+  --card-radius: 6px;
+
+  --gap: 8px;
+  --gap-lg: 16px;
+
+  font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  outline: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
