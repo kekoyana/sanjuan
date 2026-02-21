@@ -478,7 +478,7 @@ function BuilderPanel({
           {buildableInfo.map(({ card: c, def, canBuildAny, craneBuild, normalBuild }) => {
             const cost = getBuildCost(state, 0, def.id);
             return (
-              <div key={c.instanceId} style={{ position: 'relative' }}>
+              <div key={c.instanceId} className="card-with-label">
                 <CardView
                   card={c}
                   size="normal"
@@ -487,11 +487,7 @@ function BuilderPanel({
                   onClick={() => canBuildAny && setSelectedBuild(c.instanceId)}
                 />
                 {canBuildAny && (
-                  <div style={{
-                    position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)',
-                    fontSize: '0.65rem', color: 'var(--color-gold)', background: 'rgba(0,0,0,0.8)',
-                    padding: '0 4px', borderRadius: '3px', whiteSpace: 'nowrap'
-                  }}>
+                  <div className="card-label">
                     {!normalBuild && craneBuild ? '建替' : `コスト:${cost}`}
                   </div>
                 )}
@@ -535,7 +531,7 @@ function BuilderPanel({
               const targetDef = getCardDef(b.card);
               const craneCost = getBuildCost(state, 0, buildDef.id, targetDef.id);
               return (
-                <div key={b.card.instanceId} style={{ position: 'relative' }}>
+                <div key={b.card.instanceId} className="card-with-label">
                   <CardView
                     card={b.card}
                     size="small"
@@ -546,11 +542,7 @@ function BuilderPanel({
                       setCraneDecided(true);
                     }}
                   />
-                  <div style={{
-                    position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)',
-                    fontSize: '0.65rem', color: 'var(--color-gold)', background: 'rgba(0,0,0,0.8)',
-                    padding: '0 4px', borderRadius: '3px', whiteSpace: 'nowrap'
-                  }}>
+                  <div className="card-label">
                     差額:{craneCost}
                   </div>
                 </div>
@@ -605,7 +597,7 @@ function BuilderPanel({
           <p>支払いに使う商品を選択 (最大{maxGoods}個)。使わない場合はスキップ。</p>
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
             {goodBuildings.map(({ building: b, index: idx }) => (
-              <div key={b.card.instanceId} style={{ position: 'relative' }}>
+              <div key={b.card.instanceId} className="card-with-label">
                 <CardView
                   card={b.card}
                   size="small"
@@ -615,11 +607,7 @@ function BuilderPanel({
                   onClick={() => toggleGood(idx)}
                 />
                 {b.good && (
-                  <div style={{
-                    position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)',
-                    fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.8)',
-                    padding: '0 4px', borderRadius: '3px', whiteSpace: 'nowrap'
-                  }}>
+                  <div className="card-label">
                     {GOOD_NAMES[b.good]}
                   </div>
                 )}

@@ -677,6 +677,24 @@
   width: 100%;
 }
 
+/* ==================== Card with Label (below card) ==================== */
+.card-with-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.card-label {
+  font-size: 0.7rem;
+  color: var(--color-gold);
+  background: rgba(0, 0, 0, 0.75);
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  text-align: center;
+}
+
 /* ==================== Councillor Cards ==================== */
 .councillor-cards {
   display: flex;
