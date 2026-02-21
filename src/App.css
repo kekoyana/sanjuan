@@ -331,6 +331,10 @@
 
 .card-view.clickable {
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
 
 .card-view.clickable:hover {
