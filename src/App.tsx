@@ -18,6 +18,7 @@ import {
   aiDecideProduction,
   aiDecideTrade,
   aiDecideCouncillor,
+  aiDecideChapel,
 } from './game/ai';
 import { getCardDef } from './game/utils';
 import { CardView } from './components/CardView';
@@ -42,6 +43,23 @@ function App() {
           const role = aiSelectRole(state, selector.id);
           dispatch({ type: 'SELECT_ROLE', role });
         }, 400);
+        return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+      }
+      return;
+    }
+
+    // 礼拝堂フェーズ
+    if (state.phase === 'chapel_phase') {
+      const chapelPlayer = state.players[state.executingPlayerIndex];
+      if (!chapelPlayer.isHuman) {
+        timerRef.current = window.setTimeout(() => {
+          const cardId = aiDecideChapel(state, chapelPlayer.id);
+          if (cardId !== null) {
+            dispatch({ type: 'USE_CHAPEL', cardInstanceId: cardId });
+          } else {
+            dispatch({ type: 'SKIP_CHAPEL' });
+          }
+        }, 300);
         return () => { if (timerRef.current) clearTimeout(timerRef.current); };
       }
       return;
@@ -91,6 +109,9 @@ function App() {
         )}
         {state.phase === 'role_selection' && (
           <span className="phase-tag">役職選択</span>
+        )}
+        {state.phase === 'chapel_phase' && (
+          <span className="phase-tag">礼拝堂</span>
         )}
         <span className="governor-tag">
           総督: {state.players[state.governorIndex].name}
@@ -256,6 +277,21 @@ function ActionPanel({
   state: GameState;
   dispatch: React.Dispatch<GameAction>;
 }) {
+  // 礼拝堂フェーズ
+  if (state.phase === 'chapel_phase') {
+    const chapelPlayer = state.players[state.executingPlayerIndex];
+    if (chapelPlayer.isHuman) {
+      return <ChapelPanel state={state} dispatch={dispatch} />;
+    }
+    return (
+      <div className="action-panel">
+        <div className="ai-thinking">
+          {chapelPlayer.name} が礼拝堂を使用中<span className="dots"></span>
+        </div>
+      </div>
+    );
+  }
+
   // 役職選択フェーズ
   if (state.phase === 'role_selection') {
     const selector = state.players[state.currentRoleSelector];
@@ -690,6 +726,49 @@ function CouncillorPanel({
           }}
         >
           選択 ({selected.size}/{keepCount})
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Chapel Phase
+function ChapelPanel({
+  state,
+  dispatch,
+}: {
+  state: GameState;
+  dispatch: React.Dispatch<GameAction>;
+}) {
+  const player = state.players[0];
+  const chapelBuilding = player.buildings.find(
+    (b) => b.card.defId === 'chapel'
+  );
+  const storedCount = chapelBuilding ? chapelBuilding.chapelCards : 0;
+
+  return (
+    <div className="action-panel">
+      <h3>礼拝堂 - 手札1枚を格納 (現在{storedCount}枚格納済み)</h3>
+      <p>格納した1枚につきゲーム終了時+1VP。格納するカードを選択してください。</p>
+      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
+        {player.hand.map((c) => (
+          <CardView
+            key={c.instanceId}
+            card={c}
+            size="normal"
+            clickable
+            onClick={() =>
+              dispatch({ type: 'USE_CHAPEL', cardInstanceId: c.instanceId })
+            }
+          />
+        ))}
+      </div>
+      <div className="action-buttons">
+        <button
+          className="skip"
+          onClick={() => dispatch({ type: 'SKIP_CHAPEL' })}
+        >
+          格納しない
         </button>
       </div>
     </div>

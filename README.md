@@ -1,50 +1,56 @@
-# React + TypeScript + Vite
+# San Juan (サンファン)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ボードゲーム「サンファン」(2004年) の Web 実装です。
+1人のプレイヤーが3体のAIと対戦する4人プレイのカードゲームです。
 
-Currently, two official plugins are available:
+## 技術スタック
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 18 + TypeScript (strict mode)
+- Vite 6
+- Vitest (テスト)
+- CSS (フレームワーク不使用、レスポンシブ対応)
 
-## Expanding the ESLint configuration
+## セットアップ
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+npm install
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## コマンド
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+npm run dev        # 開発サーバー起動
+npm run build      # プロダクションビルド (tsc + vite build)
+npm run test       # テスト実行
+npm run test:watch # テスト (ウォッチモード)
+npm run lint       # ESLint
+npm run preview    # プロダクションビルドのプレビュー
 ```
+
+## プロジェクト構成
+
+```
+src/
+├── game/           # ゲームロジック (React非依存の純粋関数)
+│   ├── types.ts    # 型定義・定数
+│   ├── cardData.ts # カードデータベース (22種約110枚)
+│   ├── utils.ts    # デッキ操作・ヘルパー
+│   ├── engine.ts   # コアゲームロジック
+│   ├── scoring.ts  # 終了時得点計算
+│   ├── ai.ts       # AI意思決定
+│   ├── actions.ts  # アクション型定義
+│   └── reducer.ts  # useReducer本体
+├── components/     # 再利用可能UIコンポーネント
+├── App.tsx         # メインUI
+└── App.css         # スタイル (レスポンシブ対応)
+```
+
+詳細なアーキテクチャは [ARCHITECTURE.md](./ARCHITECTURE.md) を参照してください。
+
+## ゲームルール
+
+- 各ラウンドで4人が順番に5つの役職(建築士・監督・商人・参事会員・金鉱掘り)から1つ選択
+- 選んだ役職のアクションを全員が実行(選んだプレイヤーは特権あり)
+- 建物を建設してVP(勝利点)を稼ぐ
+- 誰かが12個目の建物を建設したラウンドの終了時にゲーム終了
+- 最も多くのVPを獲得したプレイヤーが勝利

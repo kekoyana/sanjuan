@@ -6,7 +6,12 @@
       "Bash(pkill:*)",
       "Bash(curl:*)",
       "Bash(wc:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(du:*)",
+      "Bash(npm install:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(gh api:*)"
     ]
   }
 }

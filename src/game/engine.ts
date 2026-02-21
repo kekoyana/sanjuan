@@ -721,7 +721,8 @@ function advanceToNextRoleSelection(state: GameState): GameState {
 
   // 全員が役職を選んだ？
   if (s.rolesSelectedThisRound >= 4) {
-    return startNewRound(s);
+    // ラウンド終了 → 礼拝堂フェーズへ
+    return startChapelPhase(s);
   }
 
   // 次のプレイヤーの役職選択へ
@@ -736,6 +737,55 @@ function advanceToNextRoleSelection(state: GameState): GameState {
   };
 
   return s;
+}
+
+// ==================== 礼拝堂フェーズ ====================
+
+function findNextChapelPlayer(
+  state: GameState,
+  startFrom: number
+): number | null {
+  for (let i = 0; i < 4; i++) {
+    const idx = (startFrom + i) % 4;
+    if (canUseChapel(state, idx)) {
+      return idx;
+    }
+  }
+  return null;
+}
+
+function startChapelPhase(state: GameState): GameState {
+  const firstPlayer = findNextChapelPlayer(state, state.governorIndex);
+  if (firstPlayer === null) {
+    // 誰も礼拝堂を使えない → 新ラウンドへ
+    return startNewRound(state);
+  }
+
+  return {
+    ...state,
+    phase: 'chapel_phase',
+    subPhase: 'chapel_tuck',
+    currentRole: null,
+    executingPlayerIndex: firstPlayer,
+  };
+}
+
+export function advanceChapelPhase(state: GameState): GameState {
+  const nextIdx = nextPlayer(state.executingPlayerIndex);
+  const nextChapelPlayer = findNextChapelPlayer(state, nextIdx);
+
+  if (
+    nextChapelPlayer === null ||
+    nextChapelPlayer === state.executingPlayerIndex
+  ) {
+    // もう誰も使えない → 新ラウンドへ
+    return startNewRound(state);
+  }
+
+  return {
+    ...state,
+    executingPlayerIndex: nextChapelPlayer,
+  };
 }
 
 function startNewRound(state: GameState): GameState {

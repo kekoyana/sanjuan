@@ -11,6 +11,7 @@ import {
   executeChapel,
   advanceToNextPlayer,
   markPlayerCompleted,
+  advanceChapelPhase,
 } from './engine';
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -109,15 +110,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'USE_CHAPEL': {
-      return executeChapel(
+      let s = executeChapel(
         state,
         state.executingPlayerIndex,
         action.cardInstanceId
       );
+      s = advanceChapelPhase(s);
+      return s;
     }
 
     case 'SKIP_CHAPEL': {
-      return state;
+      return advanceChapelPhase(state);
     }
 
     case 'ADVANCE': {
