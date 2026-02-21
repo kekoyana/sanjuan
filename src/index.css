@@ -5,42 +5,60 @@
 }
 
 :root {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-tertiary: #0f3460;
-  --bg-card: #1e2a45;
-  --border: #2a3a5a;
-  --border-highlight: #5a7aaa;
-  --text-primary: #e0e0e0;
-  --text-secondary: #8899aa;
-  --text-muted: #556677;
+  /* Backgrounds - aged wood */
+  --bg-primary: #2c1e10;
+  --bg-secondary: #3a2a18;
+  --bg-tertiary: #4a3520;
+  --bg-card: #f5e6c8;
+  --bg-parchment: #ede0c8;
+  --bg-parchment-dark: #d4c4a0;
 
-  --color-indigo: #5c6bc0;
-  --color-sugar: #e8d5a3;
-  --color-tobacco: #8d6e63;
-  --color-coffee: #6d4c41;
-  --color-silver: #b0bec5;
-  --color-violet: #7e57c2;
-  --color-production: #2e7d32;
+  /* Borders */
+  --border: #8b7355;
+  --border-highlight: #c4a265;
+  --border-dark: #5a4a30;
 
-  --color-gold: #ffd54f;
-  --color-blue: #42a5f5;
-  --color-red: #ef5350;
-  --color-green: #66bb6a;
+  /* Text */
+  --text-primary: #2c1a0e;
+  --text-secondary: #5a4a30;
+  --text-muted: #8b7a60;
+  --text-on-dark: #e8d5b5;
+  --text-on-dark-muted: #a8956e;
 
+  /* Card type colors - desaturated, aged */
+  --color-indigo: #3e5080;
+  --color-sugar: #a08050;
+  --color-tobacco: #6b4a30;
+  --color-coffee: #4a3020;
+  --color-silver: #8a9098;
+  --color-violet: #6a4480;
+
+  /* Accents */
+  --color-gold: #c4952a;
+  --color-gold-bright: #d4a83a;
+  --color-crimson: #8b2020;
+  --color-green: #3a6830;
+  --color-blue: #2a5a80;
+  --color-red: #8b2020;
+
+  /* Decorative */
+  --shadow-warm: rgba(44, 30, 16, 0.4);
+  --shadow-gold: rgba(196, 149, 42, 0.3);
+
+  /* Card sizes */
   --card-w: 90px;
   --card-h: 130px;
   --card-w-sm: 60px;
   --card-h-sm: 88px;
   --card-w-xs: 45px;
   --card-h-xs: 66px;
-  --card-radius: 6px;
+  --card-radius: 4px;
 
   --gap: 8px;
   --gap-lg: 16px;
 
-  font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
-  color: var(--text-primary);
+  font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  color: var(--text-on-dark);
   background-color: var(--bg-primary);
 }
 

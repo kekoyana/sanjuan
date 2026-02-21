@@ -11,7 +11,8 @@
       "Bash(du:*)",
       "Bash(npm install:*)",
       "Bash(npx vitest run:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(npm test:*)"
     ]
   }
 }

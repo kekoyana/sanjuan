@@ -79,6 +79,7 @@ function App() {
     return (
       <div className="title-screen">
         <h1>San Juan</h1>
+        <div className="title-divider" />
         <p>サンファン - カードゲーム</p>
         <button onClick={() => dispatch({ type: 'START_GAME' })}>
           ゲーム開始

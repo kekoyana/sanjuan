@@ -6,31 +6,81 @@
   justify-content: center;
   height: 100%;
   gap: 24px;
+  background:
+    radial-gradient(ellipse at center, rgba(44, 30, 16, 0.5) 0%, rgba(44, 30, 16, 0.85) 100%),
+    url('/images/nautical-chart.jpg') center / cover no-repeat;
+  background-color: var(--bg-primary);
 }
 
 .title-screen h1 {
-  font-size: 2.5rem;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 3.5rem;
+  font-weight: 700;
   color: var(--color-gold);
-  text-shadow: 0 2px 8px rgba(255, 213, 79, 0.3);
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(196, 149, 42, 0.15);
+  letter-spacing: 0.15em;
+}
+
+.title-divider {
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-gold) 20%,
+    var(--color-gold) 80%,
+    transparent 100%
+  );
+  position: relative;
+}
+
+.title-divider::before {
+  content: '\2766';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--color-gold);
+  font-size: 14px;
+  background: var(--bg-primary);
+  padding: 0 8px;
 }
 
 .title-screen p {
-  color: var(--text-secondary);
+  font-family: 'Noto Serif JP', serif;
+  color: var(--text-on-dark-muted);
   font-size: 1.1rem;
+  letter-spacing: 0.1em;
 }
 
 .title-screen button {
-  padding: 12px 48px;
-  font-size: 1.2rem;
-  background: var(--bg-tertiary);
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  padding: 14px 56px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background:
+    linear-gradient(180deg, #5a4020 0%, #3a2a15 40%, #2c1e10 100%);
   color: var(--color-gold);
   border: 2px solid var(--color-gold);
-  border-radius: 8px;
-  transition: background 0.2s;
+  border-radius: 4px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition: all 0.25s;
 }
 
 .title-screen button:hover {
-  background: rgba(255, 213, 79, 0.15);
+  background:
+    linear-gradient(180deg, #6a5030 0%, #4a3a25 40%, #3c2e20 100%);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--shadow-gold),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
 }
 
 /* ==================== Game Board ==================== */
@@ -39,6 +89,10 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background:
+    linear-gradient(rgba(44, 30, 16, 0.4), rgba(44, 30, 16, 0.5)),
+    url('/images/wood-table.jpg') center / cover no-repeat;
+  background-color: var(--bg-primary);
 }
 
 /* Phase Indicator */
@@ -46,29 +100,37 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 12px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  padding: 6px 16px;
+  background:
+    linear-gradient(180deg, #4a3520 0%, #3a2a18 100%);
+  border-bottom: 2px solid var(--border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   font-size: 0.85rem;
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  color: var(--text-on-dark);
   flex-wrap: wrap;
-  min-height: 36px;
+  min-height: 40px;
 }
 
 .phase-indicator .phase-tag {
-  padding: 2px 10px;
-  border-radius: 4px;
-  background: var(--bg-tertiary);
+  padding: 3px 14px;
+  border-radius: 3px;
+  background: rgba(196, 149, 42, 0.15);
+  border: 1px solid var(--color-gold);
   color: var(--color-gold);
-  font-weight: bold;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size: 0.8em;
 }
 
 .phase-indicator .governor-tag {
-  color: var(--color-gold);
+  color: var(--color-gold-bright);
 }
 
 .phase-indicator .deck-info {
   margin-left: auto;
-  color: var(--text-muted);
+  color: var(--text-on-dark-muted);
+  font-style: italic;
 }
 
 /* Main Content Area */
@@ -85,13 +147,13 @@
   overflow: hidden;
 }
 
-/* Opponents Row */
+/* ==================== Opponents Row ==================== */
 .opponents-row {
   display: flex;
-  gap: 4px;
-  padding: 4px 8px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(180deg, #3a2a18 0%, #2c1e10 100%);
+  border-bottom: 2px solid var(--border-dark);
   min-height: 0;
   overflow-x: auto;
 }
@@ -99,39 +161,45 @@
 .opponent-area {
   flex: 1;
   min-width: 0;
-  padding: 4px 6px;
+  padding: 6px 8px;
   border-radius: 4px;
-  background: var(--bg-card);
+  background: rgba(245, 230, 200, 0.06);
+  border: 1px solid rgba(139, 115, 85, 0.25);
 }
 
 .opponent-area.is-active {
   outline: 2px solid var(--color-gold);
+  background: rgba(245, 230, 200, 0.1);
+  animation: goldPulse 2s ease-in-out infinite;
 }
 
 .opponent-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   font-size: 0.75rem;
+  color: var(--text-on-dark);
 }
 
 .opponent-header .name {
-  font-weight: bold;
+  font-weight: 700;
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .opponent-header .hand-count {
-  color: var(--text-muted);
+  color: var(--text-on-dark-muted);
   margin-left: auto;
   white-space: nowrap;
+  font-style: italic;
 }
 
 .opponent-header .governor-badge {
   color: var(--color-gold);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .opponent-buildings {
@@ -140,25 +208,29 @@
   gap: 3px;
 }
 
-/* Player Area */
+/* ==================== Player Area ==================== */
 .player-section {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 6px 8px;
+  padding: 8px 12px;
+  background: rgba(245, 230, 200, 0.04);
 }
 
 .player-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
-  font-size: 0.85rem;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: var(--text-on-dark);
 }
 
 .player-header .name {
-  font-weight: bold;
+  font-weight: 700;
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  letter-spacing: 0.05em;
 }
 
 .player-header .governor-badge {
@@ -168,10 +240,13 @@
 .player-buildings-label,
 .player-hand-label {
   font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-bottom: 2px;
+  color: var(--text-on-dark-muted);
+  margin-bottom: 3px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+  padding-bottom: 2px;
 }
 
 .player-buildings {
@@ -194,14 +269,31 @@
 /* ==================== Card Component ==================== */
 .card-view {
   border-radius: var(--card-radius);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   position: relative;
   overflow: hidden;
   cursor: default;
-  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow:
+    1px 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Parchment edge effect */
+.card-view::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 15px rgba(139, 115, 85, 0.1),
+    inset 0 0 3px rgba(0, 0, 0, 0.05);
+  pointer-events: none;
 }
 
 .card-view.size-normal {
@@ -227,14 +319,17 @@
 }
 
 .card-view.clickable:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  border-color: var(--border-highlight);
+  transform: translateY(-4px);
+  box-shadow:
+    2px 6px 16px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--border-highlight);
 }
 
 .card-view.selected {
   border-color: var(--color-gold);
-  box-shadow: 0 0 8px rgba(255, 213, 79, 0.4);
+  box-shadow:
+    0 0 12px var(--shadow-gold),
+    inset 0 0 10px rgba(196, 149, 42, 0.1);
 }
 
 .card-view.disabled {
@@ -242,13 +337,31 @@
   pointer-events: none;
 }
 
-/* Card type colors */
-.card-view.type-indigo { background: linear-gradient(135deg, #3949ab 0%, #283593 100%); }
-.card-view.type-sugar { background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%); }
-.card-view.type-tobacco { background: linear-gradient(135deg, #5d4037 0%, #4e342e 100%); }
-.card-view.type-coffee { background: linear-gradient(135deg, #4e342e 0%, #3e2723 100%); }
-.card-view.type-silver { background: linear-gradient(135deg, #78909c 0%, #546e7a 100%); }
-.card-view.type-violet { background: linear-gradient(135deg, #512da8 0%, #4527a0 100%); }
+/* Card type colors - top band + subtle tint on parchment texture */
+.card-view.type-indigo {
+  border-top: 4px solid var(--color-indigo);
+  background: linear-gradient(180deg, rgba(62, 80, 128, 0.15) 0%, rgba(245, 230, 200, 0.9) 30%), url('/images/parchment-card.png') center / cover;
+}
+.card-view.type-sugar {
+  border-top: 4px solid var(--color-sugar);
+  background: linear-gradient(180deg, rgba(160, 128, 80, 0.15) 0%, rgba(245, 230, 200, 0.9) 30%), url('/images/parchment-card.png') center / cover;
+}
+.card-view.type-tobacco {
+  border-top: 4px solid var(--color-tobacco);
+  background: linear-gradient(180deg, rgba(107, 74, 48, 0.15) 0%, rgba(245, 230, 200, 0.9) 30%), url('/images/parchment-card.png') center / cover;
+}
+.card-view.type-coffee {
+  border-top: 4px solid var(--color-coffee);
+  background: linear-gradient(180deg, rgba(74, 48, 32, 0.15) 0%, rgba(245, 230, 200, 0.9) 30%), url('/images/parchment-card.png') center / cover;
+}
+.card-view.type-silver {
+  border-top: 4px solid var(--color-silver);
+  background: linear-gradient(180deg, rgba(138, 144, 152, 0.15) 0%, rgba(245, 230, 200, 0.9) 30%), url('/images/parchment-card.png') center / cover;
+}
+.card-view.type-violet {
+  border-top: 4px solid var(--color-violet);
+  background: linear-gradient(180deg, rgba(106, 68, 128, 0.15) 0%, rgba(245, 230, 200, 0.9) 30%), url('/images/parchment-card.png') center / cover;
+}
 
 .card-header {
   display: flex;
@@ -258,57 +371,64 @@
 }
 
 .card-cost {
-  background: rgba(0,0,0,0.5);
-  color: var(--color-gold);
+  background: var(--color-crimson);
+  color: #f5e6c8;
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 0.7em;
+  font-weight: 700;
+  font-size: 0.75em;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  font-family: 'Cinzel', serif;
 }
 
 .card-vp {
-  background: rgba(255,213,79,0.3);
-  color: var(--color-gold);
+  background: var(--color-gold);
+  color: var(--bg-primary);
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 0.7em;
+  font-weight: 700;
+  font-size: 0.75em;
   flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  font-family: 'Cinzel', serif;
 }
 
 .card-name {
-  padding: 2px 4px;
-  font-weight: bold;
+  padding: 3px 4px;
+  font-weight: 700;
   text-align: center;
   line-height: 1.2;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  color: var(--text-primary);
+  font-size: 0.7em;
 }
 
 .card-ability {
-  padding: 1px 3px 3px;
-  font-size: 0.85em;
-  color: rgba(255,255,255,0.7);
+  padding: 2px 4px 4px;
+  font-size: 0.8em;
+  color: var(--text-secondary);
   text-align: center;
-  line-height: 1.1;
+  line-height: 1.15;
+  font-style: italic;
+  border-top: 1px solid rgba(139, 115, 85, 0.2);
 }
 
 .card-view.size-small .card-cost,
 .card-view.size-small .card-vp {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   font-size: 0.65em;
 }
 
@@ -330,12 +450,13 @@
 /* Goods Token */
 .goods-token {
   position: absolute;
-  bottom: 3px;
-  right: 3px;
+  bottom: 4px;
+  right: 4px;
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.5);
+  border: 2px solid rgba(44, 30, 16, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .goods-token.good-indigo { background: var(--color-indigo); }
@@ -348,7 +469,7 @@
   position: absolute;
   bottom: 3px;
   left: 3px;
-  background: rgba(0,0,0,0.7);
+  background: rgba(44, 30, 16, 0.8);
   color: var(--color-gold);
   border-radius: 8px;
   padding: 0 4px;
@@ -357,23 +478,30 @@
 
 /* ==================== Action Panel ==================== */
 .action-panel {
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border);
-  padding: 8px;
+  background:
+    linear-gradient(180deg, var(--bg-parchment) 0%, var(--bg-parchment-dark) 100%);
+  border-top: 3px solid var(--border);
+  padding: 10px 12px;
   max-height: 50vh;
   overflow-y: auto;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
 }
 
 .action-panel h3 {
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-  color: var(--color-gold);
+  font-size: 0.95rem;
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
 }
 
 .action-panel p {
   font-size: 0.8rem;
   color: var(--text-secondary);
   margin-bottom: 6px;
+  font-style: italic;
 }
 
 .action-buttons {
@@ -384,33 +512,55 @@
 }
 
 .action-buttons button {
-  padding: 6px 16px;
-  border-radius: 6px;
+  padding: 8px 20px;
+  border-radius: 4px;
   font-size: 0.85rem;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  font-family: 'Noto Serif JP', serif;
+  background:
+    linear-gradient(180deg, #5a4a30 0%, #3a2a18 100%);
+  color: var(--text-on-dark);
   border: 1px solid var(--border);
-  transition: background 0.15s, border-color 0.15s;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.2s;
 }
 
 .action-buttons button:hover:not(:disabled) {
-  background: rgba(66, 165, 245, 0.2);
-  border-color: var(--color-blue);
+  background:
+    linear-gradient(180deg, #6a5a40 0%, #4a3a28 100%);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
 }
 
 .action-buttons button.primary {
-  background: var(--bg-tertiary);
-  border-color: var(--color-gold);
+  background:
+    linear-gradient(180deg, #5a4020 0%, #3a2810 100%);
+  border: 2px solid var(--color-gold);
   color: var(--color-gold);
+  font-weight: 700;
 }
 
 .action-buttons button.primary:hover:not(:disabled) {
-  background: rgba(255, 213, 79, 0.15);
+  background:
+    linear-gradient(180deg, #6a5030 0%, #4a3820 100%);
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.4),
+    0 0 12px var(--shadow-gold);
 }
 
 .action-buttons button.skip {
+  background: transparent;
+  border: 1px solid var(--text-muted);
   color: var(--text-muted);
-  border-color: var(--text-muted);
+  box-shadow: none;
+}
+
+.action-buttons button.skip:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-secondary);
 }
 
 /* ==================== Role Selection ==================== */
@@ -424,34 +574,45 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px;
-  background: var(--bg-card);
+  padding: 10px 16px;
+  background:
+    linear-gradient(135deg, var(--bg-card) 0%, var(--bg-parchment-dark) 100%);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 4px;
   color: var(--text-primary);
   font-size: 0.9rem;
-  transition: background 0.15s, border-color 0.15s;
+  transition: all 0.2s;
   text-align: left;
   width: 100%;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .role-btn:hover:not(:disabled) {
-  background: var(--bg-tertiary);
-  border-color: var(--color-blue);
+  background:
+    linear-gradient(135deg, #f5e6c8 0%, #e5d0a8 100%);
+  border-color: var(--color-gold);
+  box-shadow:
+    1px 3px 8px rgba(0, 0, 0, 0.25),
+    0 0 8px var(--shadow-gold);
+  transform: translateX(4px);
 }
 
 .role-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
+  filter: grayscale(0.5);
 }
 
 .role-btn .role-name {
-  font-weight: bold;
+  font-weight: 700;
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
   min-width: 90px;
+  color: var(--text-primary);
 }
 
 .role-btn .role-desc {
   font-size: 0.8rem;
   color: var(--text-secondary);
+  font-style: italic;
 }
 
 .role-btn .role-privilege {
@@ -459,6 +620,7 @@
   color: var(--color-gold);
   margin-left: auto;
   white-space: nowrap;
+  font-weight: 600;
 }
 
 /* ==================== Councillor Cards ==================== */
@@ -472,29 +634,52 @@
 /* ==================== Game Log ==================== */
 .game-log {
   width: 200px;
-  background: var(--bg-secondary);
-  border-left: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(245, 230, 200, 0.95) 0%, rgba(212, 196, 160, 0.95) 100%);
+  border-left: 3px solid var(--border);
   overflow-y: auto;
-  padding: 6px;
+  padding: 8px;
   font-size: 0.7rem;
+  color: var(--text-primary);
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
 }
 
 .game-log h4 {
-  color: var(--text-muted);
-  margin-bottom: 4px;
-  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
 }
 
 .game-log .log-entry {
-  padding: 2px 0;
+  padding: 3px 0;
   color: var(--text-secondary);
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(139, 115, 85, 0.15);
+  line-height: 1.4;
 }
 
 .game-log .log-entry.separator {
-  color: var(--text-muted);
-  font-weight: bold;
-  margin-top: 4px;
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-top: 6px;
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  font-size: 0.75em;
+}
+
+/* Custom scrollbar for log */
+.game-log::-webkit-scrollbar {
+  width: 6px;
+}
+.game-log::-webkit-scrollbar-track {
+  background: rgba(139, 115, 85, 0.1);
+}
+.game-log::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
 }
 
 /* ==================== Score Board ==================== */
@@ -504,64 +689,97 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 16px;
-  padding: 24px;
+  gap: 20px;
+  padding: 32px;
+  background:
+    linear-gradient(rgba(44, 30, 16, 0.7), rgba(44, 30, 16, 0.85)),
+    url('/images/colonial-hall.jpg') center / cover no-repeat;
+  background-color: var(--bg-primary);
 }
 
 .score-board h2 {
-  font-size: 1.8rem;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 2.2rem;
   color: var(--color-gold);
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 .score-table {
   width: 100%;
-  max-width: 600px;
+  max-width: 650px;
   border-collapse: collapse;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .score-table th,
 .score-table td {
-  padding: 6px 12px;
+  padding: 8px 10px;
   text-align: center;
-  border-bottom: 1px solid var(--border);
   font-size: 0.85rem;
 }
 
 .score-table th {
-  color: var(--text-muted);
-  font-size: 0.75rem;
+  background: linear-gradient(180deg, #5a4a30 0%, #3a2a18 100%);
+  color: var(--text-on-dark-muted);
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--border);
+}
+
+.score-table td {
+  border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+  color: var(--text-primary);
 }
 
 .score-table .winner td {
   color: var(--color-gold);
-  font-weight: bold;
+  font-weight: 700;
+  background: rgba(196, 149, 42, 0.08);
 }
 
 .score-table .total-row td {
-  border-top: 2px solid var(--border-highlight);
-  font-weight: bold;
-  font-size: 1rem;
+  border-top: 2px solid var(--border);
+  font-weight: 700;
+  font-size: 1.05rem;
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
 }
 
 .score-board button {
-  padding: 10px 40px;
-  font-size: 1.1rem;
-  background: var(--bg-tertiary);
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  padding: 12px 48px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: linear-gradient(180deg, #5a4020 0%, #3a2810 100%);
   color: var(--color-gold);
   border: 2px solid var(--color-gold);
-  border-radius: 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.08em;
+  transition: all 0.25s;
 }
 
 .score-board button:hover {
-  background: rgba(255, 213, 79, 0.15);
+  background: linear-gradient(180deg, #6a5030 0%, #4a3820 100%);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    0 0 16px var(--shadow-gold);
+  transform: translateY(-1px);
 }
 
-/* AI thinking indicator */
+/* ==================== AI Thinking ==================== */
 .ai-thinking {
   padding: 12px;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 0.85rem;
+  font-style: italic;
 }
 
 .ai-thinking .dots::after {
@@ -576,13 +794,38 @@
   75% { content: '...'; }
 }
 
+/* ==================== Animations ==================== */
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--shadow-gold); }
+  50% { box-shadow: 0 0 16px var(--shadow-gold); }
+}
+
+@keyframes cardDeal {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.player-hand .card-view {
+  animation: cardDeal 0.3s ease-out;
+}
+
 /* ==================== Mobile ==================== */
 @media (max-width: 767px) {
   :root {
-    --card-w: 70px;
-    --card-h: 100px;
-    --card-w-sm: 48px;
-    --card-h-sm: 70px;
+    --card-w: 72px;
+    --card-h: 104px;
+    --card-w-sm: 50px;
+    --card-h-sm: 72px;
+  }
+
+  .title-screen h1 {
+    font-size: 2.2rem;
   }
 
   .game-main {
@@ -603,7 +846,7 @@
   }
 
   .phase-indicator {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     padding: 4px 8px;
   }
 
@@ -618,6 +861,12 @@
 
   .action-panel {
     padding: 6px;
+  }
+
+  .score-table th,
+  .score-table td {
+    padding: 4px 6px;
+    font-size: 0.75rem;
   }
 }
 

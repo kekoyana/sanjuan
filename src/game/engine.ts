@@ -29,7 +29,7 @@ export function createInitialGameState(): GameState {
   const discard: Card[] = [];
   const players: PlayerState[] = [];
 
-  const names = ['あなた', 'AI アリス', 'AI ボブ', 'AI チャーリー'];
+  const names = ['あなた', 'ポンセ', 'コロン', 'ラス・カサス'];
 
   for (let i = 0; i < 4; i++) {
     // 初期建物: インディゴ染料工場
