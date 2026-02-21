@@ -1,11 +1,13 @@
 /* ==================== Title Screen ==================== */
 .title-screen {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100%;
   gap: 24px;
+  overflow-y: auto;
+  padding: 40px 0;
   background:
     radial-gradient(ellipse at center, rgba(44, 30, 16, 0.5) 0%, rgba(44, 30, 16, 0.85) 100%),
     url('/images/nautical-chart.jpg') center / cover no-repeat;
@@ -81,6 +83,93 @@
     0 0 20px var(--shadow-gold),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
+}
+
+.title-spacer {
+  flex: 1;
+}
+
+.title-screen--rules-open .title-spacer {
+  flex: 0;
+}
+
+/* Title Screen - Rules */
+.rules-toggle {
+  background: transparent !important;
+  border: 1px solid var(--color-gold) !important;
+  padding: 8px 32px !important;
+  font-size: 0.9rem !important;
+  opacity: 0.8;
+  text-transform: none !important;
+}
+
+.rules-toggle:hover {
+  opacity: 1;
+  background: rgba(90, 64, 32, 0.5) !important;
+}
+
+.rules-panel {
+  max-width: 560px;
+  width: 90%;
+  text-align: left;
+  padding: 24px 32px;
+  margin-bottom: 32px;
+  background: rgba(20, 14, 8, 0.85);
+  border: 1px solid rgba(196, 149, 42, 0.3);
+  border-radius: 8px;
+}
+
+.rules-panel h2 {
+  font-family: 'Cinzel', 'Noto Serif JP', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-gold);
+  margin: 20px 0 8px 0;
+  letter-spacing: 0.05em;
+}
+
+.rules-panel h2:first-child {
+  margin-top: 0;
+}
+
+.rules-panel p {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 0.85rem;
+  color: var(--text-on-dark-muted);
+  line-height: 1.7;
+  margin: 0 0 4px 0;
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.rules-panel strong {
+  color: var(--color-gold);
+}
+
+.rules-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rules-role {
+  display: flex;
+  gap: 8px;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 0.85rem;
+  color: var(--text-on-dark-muted);
+  line-height: 1.6;
+}
+
+.rules-role-name {
+  flex-shrink: 0;
+  color: var(--color-gold);
+  font-weight: 600;
+  min-width: 5em;
+}
+
+.rules-building-types p {
+  margin-bottom: 4px;
 }
 
 /* ==================== Game Board ==================== */

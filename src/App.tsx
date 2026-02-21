@@ -77,15 +77,88 @@ function App() {
     }
   }, [state.phase, state.executingPlayerIndex, state.currentRoleSelector, state.currentRole, state.subPhase]);
 
+  const [showRules, setShowRules] = React.useState(false);
+
   if (state.phase === 'title') {
     return (
-      <div className="title-screen">
+      <div className={`title-screen${showRules ? ' title-screen--rules-open' : ''}`}>
+        <div className="title-spacer" />
         <h1>San Juan</h1>
         <div className="title-divider" />
         <p>サンファン - カードゲーム</p>
         <button onClick={() => dispatch({ type: 'START_GAME' })}>
           ゲーム開始
         </button>
+        <button className="rules-toggle" onClick={() => setShowRules(!showRules)}>
+          {showRules ? '閉じる' : '遊び方'}
+        </button>
+        {showRules && (
+          <div className="rules-panel">
+            <h2>ゲームの概要</h2>
+            <p>
+              プエルトリコの首都サンファンを舞台に、建物を建設して街を発展させるカードゲームです。
+              あなた（1人）とAI（3人）の4人で対戦します。
+            </p>
+
+            <h2>勝利条件</h2>
+            <p>
+              いずれかのプレイヤーが<strong>12棟</strong>の建物を建設するとゲーム終了。
+              建物の勝利点の合計が最も高いプレイヤーが勝利します。
+            </p>
+
+            <h2>カードの役割</h2>
+            <p>
+              カードは<strong>建物</strong>であると同時に<strong>通貨</strong>でもあります。
+              建物を建てるには、手札からカードを支払い（捨て）ます。
+            </p>
+
+            <h2>ゲームの流れ</h2>
+            <p>
+              各ラウンドでは、総督から順番に<strong>役職</strong>を1つ選びます。
+              選んだ役職のアクションは全員が実行しますが、選んだ人だけ特権（ボーナス）を得ます。
+            </p>
+
+            <h2>5つの役職</h2>
+            <div className="rules-roles">
+              <div className="rules-role">
+                <span className="rules-role-name">建築士</span>
+                <span>手札のカードを支払って建物を建設する。特権：コスト1減。</span>
+              </div>
+              <div className="rules-role">
+                <span className="rules-role-name">監督</span>
+                <span>生産施設に商品を1つ生産する。特権：追加で1つ生産。</span>
+              </div>
+              <div className="rules-role">
+                <span className="rules-role-name">商人</span>
+                <span>商品を売却してカードを引く。特権：追加で1つ売却。</span>
+              </div>
+              <div className="rules-role">
+                <span className="rules-role-name">参事会員</span>
+                <span>山札から5枚引いて1枚を選ぶ。特権：さらに多く選べる。</span>
+              </div>
+              <div className="rules-role">
+                <span className="rules-role-name">金鉱掘り</span>
+                <span>特権のみ：カードを1枚引く。他の人は何もできない。</span>
+              </div>
+            </div>
+
+            <h2>建物の種類</h2>
+            <div className="rules-building-types">
+              <p>
+                <strong>生産施設</strong>（コスト1〜3）：商品を生産・売却して収入を得る。
+                インディゴ、砂糖、タバコ、コーヒー、銀の5種類。
+              </p>
+              <p>
+                <strong>紫の建物</strong>（コスト1〜6）：特殊能力を持ち、ゲームを有利に進められる。
+                勝利点も高い。
+              </p>
+            </div>
+
+            <h2>手札上限</h2>
+            <p>手札の上限は<strong>7枚</strong>です（塔を建設すると12枚に増加）。</p>
+          </div>
+        )}
+        <div className="title-spacer" />
       </div>
     );
   }
