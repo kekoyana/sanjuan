@@ -334,10 +334,42 @@
 }
 
 .card-view.selected {
-  border-color: var(--color-gold);
+  border-color: #a05050;
+  border-width: 3px;
+  background: linear-gradient(180deg, #c4a0a0 0%, #b08080 40%, #966060 100%) !important;
   box-shadow:
-    0 0 12px var(--shadow-gold),
-    inset 0 0 10px rgba(196, 149, 42, 0.1);
+    0 0 16px rgba(150, 80, 80, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-6px);
+}
+
+.card-view.selected .card-name,
+.card-view.selected .card-ability {
+  color: #2c1a0e;
+}
+
+.card-view.selected .card-cost,
+.card-view.selected .card-vp {
+  color: #fff;
+}
+
+.card-view.selected::before {
+  content: '✓';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  color: #b03030;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .card-view.disabled {
