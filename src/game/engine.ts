@@ -29,7 +29,13 @@ export function createInitialGameState(): GameState {
   const discard: Card[] = [];
   const players: PlayerState[] = [];
 
-  const names = ['あなた', 'ポンセ', 'コロン', 'ラス・カサス'];
+  const cpuNamePool = [
+    'ポンセ', 'コロン', 'カサス', 'ディアス', 'ルナ', 'ロペス',
+    'カノ', 'レオン', 'トレス', 'ソト', 'リオス', 'クルス',
+    'モラ', 'ベガ', 'オルテ', 'シルバ', 'メサ', 'パス',
+  ];
+  const shuffled = [...cpuNamePool].sort(() => Math.random() - 0.5);
+  const names = ['あなた', shuffled[0], shuffled[1], shuffled[2]];
 
   for (let i = 0; i < 4; i++) {
     // 初期建物: インディゴ染料工場
