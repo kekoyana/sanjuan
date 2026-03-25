@@ -1,6 +1,6 @@
 import React, { useReducer, useEffect, useRef } from 'react';
 import './App.css';
-import { GameState, RoleType, GoodType, ROLE_NAMES, GOOD_NAMES } from './game/types';
+import { GameState, RoleType, GoodType, TradingTile, ROLE_NAMES, GOOD_NAMES } from './game/types';
 import { GameAction } from './game/actions';
 import { gameReducer, createInitialState } from './game/reducer';
 import {
@@ -886,6 +886,48 @@ function ProducerPanel({
   );
 }
 
+const GOOD_ICONS: Record<GoodType, string> = {
+  indigo: '🟦',
+  sugar: '⬜',
+  tobacco: '🟨',
+  coffee: '🟫',
+  silver: '⚪',
+};
+
+const GOOD_COLORS: Record<GoodType, { bg: string; border: string }> = {
+  indigo: { bg: '#c0d0e8', border: '#2a4a8a' },
+  sugar: { bg: '#f0ead8', border: '#b8a888' },
+  tobacco: { bg: '#e8d4a0', border: '#a88030' },
+  coffee: { bg: '#d8bfa0', border: '#6a3a1a' },
+  silver: { bg: '#ccd2d8', border: '#707880' },
+};
+
+const GOOD_ORDER: GoodType[] = ['indigo', 'sugar', 'tobacco', 'coffee', 'silver'];
+
+function TradingTileDisplay({ tile }: { tile: TradingTile }) {
+  return (
+    <div className="trading-tile">
+      <div className="trading-tile-label">商館タイル</div>
+      <div className="trading-tile-prices">
+        {GOOD_ORDER.map((good) => (
+          <div
+            key={good}
+            className="trading-tile-item"
+            style={{
+              background: GOOD_COLORS[good].bg,
+              borderColor: GOOD_COLORS[good].border,
+            }}
+          >
+            <span className="trading-tile-icon">{GOOD_ICONS[good]}</span>
+            <span className="trading-tile-name">{GOOD_NAMES[good]}</span>
+            <span className="trading-tile-price">{tile[good]}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Trader Phase
 function TraderPanel({
   state,
@@ -921,6 +963,9 @@ function TraderPanel({
   return (
     <div className="action-panel">
       <h3>商人 - 売却する商品を選択 (最大{maxSell}個)</h3>
+      {state.currentTradingTile && (
+        <TradingTileDisplay tile={state.currentTradingTile} />
+      )}
       {state.roleChooser === 0 && <p>特権: 売却額+1カード</p>}
       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '6px 0' }}>
         {goods.map((g) => {

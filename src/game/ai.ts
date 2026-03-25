@@ -3,8 +3,16 @@ import {
   RoleType,
   GoodType,
   Card,
-  TRADE_PRICES,
 } from './types';
+
+// 商館タイルがめくられる前のAI判断用: 5枚のタイルの平均価格
+const EXPECTED_TRADE_PRICES: Record<GoodType, number> = {
+  indigo: 1,
+  sugar: 1.4,
+  tobacco: 1.8,
+  coffee: 2.2,
+  silver: 2.6,
+};
 import {
   getCardDef,
   hasBuilding,
@@ -74,7 +82,7 @@ function scoreRole(
       const goods = getSellableGoods(state, playerId);
       if (goods.length === 0) return score - 5;
       for (const g of goods) {
-        score += TRADE_PRICES[g.goodType] * 2;
+        score += EXPECTED_TRADE_PRICES[g.goodType] * 2;
       }
       score += 2; // 特権: +1カード
       break;
@@ -177,8 +185,8 @@ export function aiDecideBuild(
       const goodBuildings = player.buildings
         .filter((b) => b.good !== null)
         .sort((a, b) => {
-          const priceA = a.good ? TRADE_PRICES[a.good] : 0;
-          const priceB = b.good ? TRADE_PRICES[b.good] : 0;
+          const priceA = a.good ? EXPECTED_TRADE_PRICES[a.good] : 0;
+          const priceB = b.good ? EXPECTED_TRADE_PRICES[b.good] : 0;
           return priceA - priceB; // 安い商品から使う
         });
       const needed = Math.min(2, cost - handPayable, goodBuildings.length);
@@ -224,8 +232,8 @@ export function aiDecideProduction(
   const sorted = [...producible].sort((a, b) => {
     const defA = getCardDef(player.buildings[a].card);
     const defB = getCardDef(player.buildings[b].card);
-    const priceA = defA.goodType ? TRADE_PRICES[defA.goodType] : 0;
-    const priceB = defB.goodType ? TRADE_PRICES[defB.goodType] : 0;
+    const priceA = defA.goodType ? EXPECTED_TRADE_PRICES[defA.goodType] : 0;
+    const priceB = defB.goodType ? EXPECTED_TRADE_PRICES[defB.goodType] : 0;
     return priceB - priceA;
   });
 
@@ -243,9 +251,10 @@ export function aiDecideTrade(
 
   const maxSell = getMaxSellCount(state, playerId);
 
-  // 高価値順にソート
+  // 高価値順にソート（商館タイルの実際の価格を使用）
+  const tile = state.currentTradingTile!;
   const sorted = [...goods].sort(
-    (a, b) => TRADE_PRICES[b.goodType] - TRADE_PRICES[a.goodType]
+    (a, b) => tile[b.goodType] - tile[a.goodType]
   );
 
   return sorted.slice(0, maxSell).map((g) => g.buildingIndex);

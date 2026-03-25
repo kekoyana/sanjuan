@@ -5,7 +5,7 @@ import {
   Card,
   RoleType,
   GoodType,
-  TRADE_PRICES,
+  TRADING_TILES,
   GOOD_NAMES,
   ROLE_NAMES,
   MAX_BUILDINGS,
@@ -67,6 +67,7 @@ export function createInitialGameState(): GameState {
     selectedCards: [],
     chapelUsedThisRound: [false, false, false, false],
     gameEndTriggered: false,
+    currentTradingTile: null,
     log: [],
     finalScores: null,
   };
@@ -219,9 +220,12 @@ export function selectRole(state: GameState, role: RoleType): GameState {
     case 'producer':
       s = { ...s, phase: 'producer_phase', subPhase: 'select_production' };
       break;
-    case 'trader':
-      s = { ...s, phase: 'trader_phase', subPhase: 'select_good' };
+    case 'trader': {
+      const tile = TRADING_TILES[Math.floor(Math.random() * TRADING_TILES.length)];
+      s = { ...s, phase: 'trader_phase', subPhase: 'select_good', currentTradingTile: tile };
+      s = addLog(s, `商館タイル: インディゴ${tile.indigo}/砂糖${tile.sugar}/タバコ${tile.tobacco}/コーヒー${tile.coffee}/銀${tile.silver}`);
       break;
+    }
     case 'councillor':
       s = { ...s, phase: 'councillor_phase', subPhase: 'select_cards' };
       // 参事会員フェーズ開始時にカードをドロー
@@ -537,7 +541,7 @@ export function executeTrade(
     const b = newBuildings[idx];
     if (!b.good) continue;
 
-    let price = TRADE_PRICES[b.good];
+    let price = state.currentTradingTile![b.good];
     // 商人特権: +1カード
     if (isChooser) price += 1 * mult;
     // マーケットホール: +1カード per sale

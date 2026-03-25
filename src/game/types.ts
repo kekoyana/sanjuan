@@ -93,6 +93,7 @@ export interface GameState {
 
   chapelUsedThisRound: boolean[];
   gameEndTriggered: boolean;
+  currentTradingTile: TradingTile | null;
 
   log: string[];
   finalScores: { playerId: number; breakdown: ScoreBreakdown }[] | null;
@@ -114,13 +115,15 @@ export const GOOD_NAMES: Record<GoodType, string> = {
   silver: '銀',
 };
 
-export const TRADE_PRICES: Record<GoodType, number> = {
-  indigo: 1,
-  sugar: 1,
-  tobacco: 2,
-  coffee: 2,
-  silver: 3,
-};
+export type TradingTile = Record<GoodType, number>;
+
+export const TRADING_TILES: TradingTile[] = [
+  { indigo: 1, sugar: 1, tobacco: 2, coffee: 2, silver: 3 },
+  { indigo: 1, sugar: 2, tobacco: 2, coffee: 2, silver: 3 },
+  { indigo: 1, sugar: 2, tobacco: 2, coffee: 3, silver: 3 },
+  { indigo: 1, sugar: 1, tobacco: 2, coffee: 2, silver: 2 },
+  { indigo: 1, sugar: 1, tobacco: 1, coffee: 2, silver: 2 },
+];
 
 export const MAX_BUILDINGS = 12;
 export const DEFAULT_HAND_LIMIT = 7;

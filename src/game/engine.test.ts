@@ -74,6 +74,7 @@ function makeGameState(overrides: Partial<GameState> = {}): GameState {
     selectedCards: [],
     chapelUsedThisRound: [false, false, false, false],
     gameEndTriggered: false,
+    currentTradingTile: null,
     log: [],
     finalScores: null,
     ...overrides,
@@ -153,10 +154,11 @@ describe('selectRole', () => {
     expect(result.phase).toBe('producer_phase');
   });
 
-  it('transitions to trader phase', () => {
+  it('transitions to trader phase with trading tile', () => {
     const state = makeGameState();
     const result = selectRole(state, 'trader');
     expect(result.phase).toBe('trader_phase');
+    expect(result.currentTradingTile).not.toBeNull();
   });
 
   it('transitions to councillor phase and draws cards', () => {
@@ -568,9 +570,12 @@ describe('getMaxSellCount', () => {
 });
 
 describe('executeTrade', () => {
+  const tradingTile = { indigo: 1, sugar: 1, tobacco: 2, coffee: 2, silver: 3 };
+
   it('removes good and draws cards equal to trade price', () => {
     const state = makeGameState({
       roleChooser: 1,
+      currentTradingTile: tradingTile,
       players: [
         makePlayer(0, {
           hand: [],
@@ -590,6 +595,7 @@ describe('executeTrade', () => {
   it('adds privilege bonus for role chooser', () => {
     const state = makeGameState({
       roleChooser: 0,
+      currentTradingTile: tradingTile,
       players: [
         makePlayer(0, {
           hand: [],

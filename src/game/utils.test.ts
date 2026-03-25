@@ -8,7 +8,6 @@ import {
   hasBuilding,
   countBuildingsByType,
   countMonuments,
-  getTradePrice,
   getHandLimit,
 } from './utils';
 import { Card, Building } from './types';
@@ -157,15 +156,6 @@ describe('countMonuments', () => {
   });
 });
 
-describe('getTradePrice', () => {
-  it('returns correct prices for each good type', () => {
-    expect(getTradePrice('indigo')).toBe(1);
-    expect(getTradePrice('sugar')).toBe(1);
-    expect(getTradePrice('tobacco')).toBe(2);
-    expect(getTradePrice('coffee')).toBe(2);
-    expect(getTradePrice('silver')).toBe(3);
-  });
-});
 
 describe('getHandLimit', () => {
   it('returns 7 without tower', () => {

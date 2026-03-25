@@ -44,6 +44,7 @@ function makeState(players: PlayerState[]): GameState {
     selectedCards: [],
     chapelUsedThisRound: [false, false, false, false],
     gameEndTriggered: true,
+    currentTradingTile: null,
     log: [],
     finalScores: null,
   };

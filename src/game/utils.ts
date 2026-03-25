@@ -1,4 +1,4 @@
-import { Card, CardDef, GoodType } from './types';
+import { Card, CardDef } from './types';
 import { CARD_DEFS, CARD_DEF_MAP } from './cardData';
 
 let nextInstanceId = 1;
@@ -70,16 +70,6 @@ export function countMonuments(buildings: { card: Card }[]): number {
     .length;
 }
 
-export function getTradePrice(goodType: GoodType): number {
-  const prices: Record<GoodType, number> = {
-    indigo: 1,
-    sugar: 1,
-    tobacco: 2,
-    coffee: 2,
-    silver: 3,
-  };
-  return prices[goodType];
-}
 
 export function getHandLimit(buildings: { card: Card }[]): number {
   return hasBuilding(buildings, 'tower') ? 12 : 7;
