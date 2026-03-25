@@ -10,6 +10,7 @@ import {
   executeTrade,
   executeCouncillor,
   executeChapel,
+  skipChapel,
   advanceToNextPlayer,
   markPlayerCompleted,
   advanceChapelPhase,
@@ -162,7 +163,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'SKIP_CHAPEL': {
-      return advanceChapelPhase(state);
+      let s = skipChapel(state, state.executingPlayerIndex);
+      return advanceChapelPhase(s);
     }
 
     case 'ADVANCE': {

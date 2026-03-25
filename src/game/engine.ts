@@ -744,6 +744,15 @@ export function executeChapel(
   return s;
 }
 
+export function skipChapel(state: GameState, playerId: number): GameState {
+  const player = getPlayer(state, playerId);
+  const chapelUsed = [...state.chapelUsedThisRound];
+  chapelUsed[playerId] = true;
+  let s = { ...state, chapelUsedThisRound: chapelUsed };
+  s = addLog(s, `${player.name}が礼拝堂をスキップ`);
+  return s;
+}
+
 // ==================== フェーズ進行 ====================
 
 export function markPlayerCompleted(
@@ -837,10 +846,7 @@ export function advanceChapelPhase(state: GameState): GameState {
   const nextIdx = nextPlayer(state.executingPlayerIndex);
   const nextChapelPlayer = findNextChapelPlayer(state, nextIdx);
 
-  if (
-    nextChapelPlayer === null ||
-    nextChapelPlayer === state.executingPlayerIndex
-  ) {
+  if (nextChapelPlayer === null) {
     // もう誰も使えない → 新ラウンドへ
     return startNewRound(state);
   }

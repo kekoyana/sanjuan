@@ -132,6 +132,12 @@ describe('gameReducer', () => {
       const result = gameReducer(state, { type: 'SKIP_CHAPEL' });
       // Hand should remain unchanged
       expect(result.players[0].hand.length).toBe(1);
+      // Since player 0 was the only one with chapel, it should advance to new round,
+      // which resets chapelUsedThisRound to [false, false, false, false]
+      expect(result.chapelUsedThisRound[0]).toBe(false);
+      expect(result.phase).toBe('role_selection');
+      // Check if skip log exists
+      expect(result.log.some(l => l.includes('スキップ'))).toBe(true);
     });
   });
 
