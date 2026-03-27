@@ -1058,6 +1058,73 @@ describe('executeArchiveDiscard', () => {
   });
 });
 
+// ==================== 図書館×参事会員 ====================
+
+describe('getCouncillorDrawCount with library', () => {
+  it('chooser with library draws 8 cards', () => {
+    const state = makeGameState({
+      roleChooser: 0,
+      players: [
+        makePlayer(0, { buildings: [makeBuilding('library')] }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    expect(getCouncillorDrawCount(state, 0)).toBe(8);
+  });
+
+  it('chooser without library draws 5 cards', () => {
+    const state = makeGameState({ roleChooser: 0 });
+    expect(getCouncillorDrawCount(state, 0)).toBe(5);
+  });
+
+  it('non-chooser with library draws 2 cards', () => {
+    const state = makeGameState({
+      roleChooser: 1,
+      players: [
+        makePlayer(0, { buildings: [makeBuilding('library')] }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    expect(getCouncillorDrawCount(state, 0)).toBe(2);
+  });
+});
+
+// ==================== 図書館×金鉱掘り ====================
+
+describe('executeProspector with library', () => {
+  it('chooser with library draws 2 cards', () => {
+    const state = makeGameState({
+      roleChooser: 0,
+      players: [
+        makePlayer(0, { buildings: [makeBuilding('library')], hand: [] }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    const result = executeProspector(state, 0);
+    expect(result.players[0].hand.length).toBe(2);
+  });
+
+  it('chooser without library draws 1 card', () => {
+    const state = makeGameState({
+      roleChooser: 0,
+      players: [
+        makePlayer(0, { hand: [] }),
+        makePlayer(1),
+        makePlayer(2),
+        makePlayer(3),
+      ],
+    });
+    const result = executeProspector(state, 0);
+    expect(result.players[0].hand.length).toBe(1);
+  });
+});
+
 describe('executeCouncillor with archive', () => {
   it('AI with archive discards excess cards', () => {
     const hand = Array.from({ length: 6 }, (_, i) => makeCard('indigo_plant', 5000 + i));

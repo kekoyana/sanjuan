@@ -586,7 +586,9 @@ export function getCouncillorDrawCount(
   playerId: number
 ): number {
   const isChooser = state.roleChooser === playerId;
-  return isChooser ? 5 : 2;
+  const mult = libraryMultiplier(state, playerId);
+  // 基本2枚、特権+3枚(図書館で特権2倍 → +6枚 = 合計8枚)
+  return isChooser ? 2 + 3 * mult : 2;
 }
 
 export function getCouncillorKeepCount(
@@ -674,9 +676,10 @@ export function executeProspector(
 ): GameState {
   let s = state;
   if (state.roleChooser === playerId) {
-    s = drawCardsForPlayer(s, playerId, 1);
+    const drawCount = 1 * libraryMultiplier(s, playerId);
+    s = drawCardsForPlayer(s, playerId, drawCount);
     const player = getPlayer(s, playerId);
-    s = addLog(s, `${player.name}が1枚引いた(金鉱掘り)`);
+    s = addLog(s, `${player.name}が${drawCount}枚引いた(金鉱掘り)`);
   }
 
   // 金鉱: 金鉱掘りを選んだプレイヤーのみ、山札4枚公開、全て異なるコストなら1枚獲得
